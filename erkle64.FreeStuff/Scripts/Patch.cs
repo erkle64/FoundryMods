@@ -133,7 +133,7 @@ namespace FreeStuff
                         var baseElementRecipe = AssetManager.getAsset<CraftingRecipe>("_base_olumic_acid");
                         foreach (var element in ItemTemplateManager.getAllElementTemplates())
                         {
-                            if (element.Value.modIdentifier == "TransportDucts") continue;
+                            if (element.Value.modIdentifier == "TransportDucts" || element.Value.identifier.StartsWith("_duct")) continue;
                             AddCreativeElementRecipe(baseElementRecipe, element.Value);
                         }
 
