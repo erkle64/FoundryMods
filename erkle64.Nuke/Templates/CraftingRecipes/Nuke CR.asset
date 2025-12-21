@@ -15,6 +15,7 @@ MonoBehaviour:
   includeIngame: 1
   includeInBuild: 1
   includeInDemo: 1
+  buildTags: []
   identifier: _erkle64_nuke
   modIdentifier: _base
   serializedOriginal: "template:\n  hideInDemo: False\n  name: Explosive Charge\n 
@@ -37,6 +38,7 @@ MonoBehaviour:
     2]==============\\n[INPUT]\\n24/m _base_xenoferrite_plates\\n24/m _base_explosives_i\\n72/m
     _base_wire_coil\\n72/m _base_eic_i\\n[OUTPUT]\\n24/m _base_dynamite_i\\n\"\n 
     identifier: _base_dynamite_i\n"
+  revision: 0
   hideInDemo: 0
   name: Nuclear Explosive Charge
   entitlementIdentifier: 

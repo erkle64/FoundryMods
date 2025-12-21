@@ -15,6 +15,7 @@ MonoBehaviour:
   includeIngame: 1
   includeInBuild: 1
   includeInDemo: 0
+  buildTags: []
   identifier: _erkle64_portal
   modIdentifier: _base
   serializedOriginal: "template:\n  name: Assembler III\n  icon_identifier: assembler_iii\n 
@@ -35,8 +36,6 @@ MonoBehaviour:
   icon_identifier: portal
   entitlementIdentifier: 
   flags: 0
-  isInternal: 0
-  internalResearchUnlockDescription: 
   manualEndlessResearchTemplate_str: 
   description: Unlocks instant long distance travel with portals.
   researchContext: 
@@ -64,7 +63,5 @@ MonoBehaviour:
   mapScanner_reservoir_identifier: 
   inventorySize_additionalInventorySlots: 0
   endlessResearch_amountOfManualEndlessResearches: 0
-  characterCraftingSpeed_additionalDecrementPercentage_str: 
-  miningDrillSpeed_miningTimeMultiplier_str: 
   miningHardness_unlockedLevel: 0
   jetpackSpeed_speedIncreasmentPercent_str: 

@@ -233,8 +233,11 @@ namespace Duplicationer
         public override void Gather(BuildableObjectGO bogo, CustomDataWrapper customData, HashSet<BuildableObjectGO> powerGridBuildings)
         {
             var balancer = (ConveyorBalancerGO)bogo;
+            var filterItem = balancer.getConfiguredFilterTemplate();
             customData.Add("balancerInputPriority", balancer.getInputPriority());
             customData.Add("balancerOutputPriority", balancer.getOutputPriority());
+            if (filterItem != null)
+                customData.Add("filterItemTemplateId", filterItem.id);
         }
     }
 
@@ -399,21 +402,6 @@ namespace Duplicationer
         }
     }
 
-    public class CDG_AL_EndConsumer : TypedCustomDataGatherer<AL_EndConsumerGO>
-    {
-        public override void Gather(BuildableObjectGO bogo, CustomDataWrapper customData, HashSet<BuildableObjectGO> powerGridBuildings)
-        {
-            var data = new AL_EndConsumerPollingUpdateData();
-            if (AL_EndConsumerGO.alEndConsumer_queryPollingData(bogo.relatedEntityId, ref data) == IOBool.iofalse)
-                return;
-
-            if (data.configuredItemTemplateId != 0)
-            {
-                customData.Add("configuredItemTemplateId", data.configuredItemTemplateId);
-            }
-        }
-    }
-
     public class CDG_AL_Start : TypedCustomDataGatherer<AL_StartGO>
     {
         public override void Gather(BuildableObjectGO bogo, CustomDataWrapper customData, HashSet<BuildableObjectGO> powerGridBuildings)
@@ -525,7 +513,7 @@ namespace Duplicationer
                     if (shipTemplate.spaceShipType != SpaceShipTemplate.SpaceShipType.TransportShip)
                         continue;
 
-                    if (ShippingPadConfigFrame.shippingPad_checkIfShipTypeIsAllowed(bogo.relatedEntityId, shipTemplate.id))
+                    if (ShippingPadConfigFrame.shippingPad_checkIfShipTypeIsAllowed(bogo.relatedEntityId, shipTemplate.id) == IOBool.iotrue)
                         allowedShipTypes.Add(shipTemplate.id);
                 }
                 customData.Add("allowedShipTypes", string.Join("|", allowedShipTypes));

@@ -131,7 +131,7 @@ namespace Duplicationer
             {
                 if (task.entityId > 0)
                 {
-                    GameRoot.addLockstepEvent(new ColorizeObjectEvent(usernameHash, task.entityId, r, g, b, false));
+                    GameRoot.addLockstepEvent(new ColorizeObjectEvent(usernameHash, task.entityId, r, g, b, false, false));
                 }
             });
         }
@@ -158,11 +158,12 @@ namespace Duplicationer
         {
             var balancerInputPriority = customData.GetCustomData<int>("balancerInputPriority");
             var balancerOutputPriority = customData.GetCustomData<int>("balancerOutputPriority");
+            var filterItemTemplateId = customData.HasCustomData("filterItemTemplateId") ? customData.GetCustomData<ulong>("filterItemTemplateId") : 0UL;
             postBuildActions.Add((ConstructionTaskGroup taskGroup, ConstructionTaskGroup.ConstructionTask task) =>
             {
                 if (task.entityId > 0)
                 {
-                    GameRoot.addLockstepEvent(new SetConveyorBalancerConfig(usernameHash, task.entityId, balancerInputPriority, balancerOutputPriority));
+                    GameRoot.addLockstepEvent(new SetConveyorBalancerConfig(usernameHash, task.entityId, balancerInputPriority, balancerOutputPriority, filterItemTemplateId));
                 }
             });
         }
@@ -426,7 +427,7 @@ namespace Duplicationer
                         {
                             if (PowerLineHH.buildingManager_powerlineHandheld_checkIfAlreadyConnected(task.entityId, toEntityId) == IOBool.iofalse)
                             {
-                                GameRoot.addLockstepEvent(new PoleConnectionEvent(usernameHash, PowerlineItemTemplate.id, task.entityId, toEntityId));
+                                GameRoot.addLockstepEvent(new PoleConnectionEvent(usernameHash, PowerlineItemTemplate.id, task.entityId, toEntityId, 0));
                             }
                         }
                     });

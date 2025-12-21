@@ -15,6 +15,7 @@ MonoBehaviour:
   includeIngame: 1
   includeInBuild: 1
   includeInDemo: 1
+  buildTags: []
   identifier: _erkle64_nuke
   modIdentifier: _base
   serializedOriginal: "template:\n  name: Explosives\n  icon_identifier: dynamite_i\n 
@@ -34,8 +35,6 @@ MonoBehaviour:
   icon_identifier: erkle64_nuke
   entitlementIdentifier: 
   flags: 0
-  isInternal: 0
-  internalResearchUnlockDescription: 
   manualEndlessResearchTemplate_str: 
   description: Throwable nuclear explosives that can be detonated remotely.
   researchContext: 
@@ -64,3 +63,4 @@ MonoBehaviour:
   miningDrillSpeed_miningTimeMultiplier_str: 
   miningHardness_unlockedLevel: 0
   jetpackSpeed_speedIncreasmentPercent_str: 
+  personalMiningDrones_additionalDrones: 0

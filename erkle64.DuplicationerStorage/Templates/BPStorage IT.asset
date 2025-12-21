@@ -1,0 +1,112 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1136031467, guid: 1c83dc1f03b8cf43812e942694488c9e, type: 3}
+  m_Name: BPStorage IT
+  m_EditorClassIdentifier: 
+  includeIngame: 1
+  includeInBuild: 1
+  includeInDemo: 1
+  identifier: _erkle64_bpstorage
+  modIdentifier: _base
+  serializedOriginal: "template:\n  name: Logistic Container I\n  includeInCreativeMode:
+    True\n  assetPack: Logistic Containers\n  creativeModeCategory_str: _base_cmct_container\n 
+    entitlementIdentifier: \"\"\n  icon_identifier: logistic_container_i\n  stackSize:
+    10\n  isHiddenItem: False\n  itemCategoryIdentifier: \"\"\n  itemCategorySortOrder:
+    0\n  canBeTradedOnStation: False\n  market_buyPrice: 0\n  market_sellPrice: 0\n 
+    _baseWeightInGrams: 1\n  flags: BUILDABLE_OBJECT\n  toggleableModeType: Default\n 
+    toggleableModes: []\n  genericItemActionButtons: []\n  tooltipInfoMessage: \"\"\n 
+    skipForRunningIdxGeneration: False\n  itemDestroyFlags: Regular\n  meshScale:\n   
+    x: 0.2\n    y: 0.2\n    z: 0.2\n  meshRotation:\n    x: 0\n    y: 0\n    z: 0\n   
+    w: 1\n  buildableObjectIdentifer: _base_logistic_container_i\n  handheldSubType:
+    0\n  skinGroup:\n  handheld_miner_shakeRightArmOnUse: False\n  handheld_defaultPowerPoleItemTemplate_str:
+    \"\"\n  supportsFocusMode: False\n  miningTimeReductionInSec: 0\n  miningRange:
+    0\n  explosionRadius: 0\n  burnable_fuelValueKJ_str: \"\"\n  burnable_residualItemTemplate_str:
+    \"\"\n  burnable_residualItemTemplate_count: 0\n  salesItem_salesItemCategoryIdentifier:
+    \"\"\n  salesItem_industryIdentifier: \"\"\n  salesItem_currencyAmount: 0\n 
+    salesItem_skyPlatformBaseCapacity: 0\n  salesItem_sortOrderASC: 0\n  salesItem_hiddenByResearchIdentifier:
+    \"\"\n  salesItem_salesPlatformBaseDemandPerDay: 25\n  salesItem_rdLabEfficiencyCrIdentifiers:
+    []\n  salesCurrency_skyPlatformBaseCapacity: 0\n  salesCurrency_sortOrderASC:
+    0\n  salesCurrency_hiddenByResearchIdentifier: \"\"\n  sciencePack_researchFrameSortingOrder:
+    0\n  sciencePack_color:\n    r: 0\n    g: 0\n    b: 0\n    a: 0\n  railminer_slotLength:
+    0\n  railminer_speedInSlotsPerTick: 0\n  railminer_minecartSpeedInSlotsPerTick:
+    0\n  railMiner_terrainTargetList_str: []\n  isMinecartItem: False\n  trainSignal_templateIdentifier:
+    \"\"\n  trainVehicle_templateIdentifier: \"\"\n  alStarter_alotIdentifier: \"\"\n 
+    alStarter_sellItemTemplateIdentifier: \"\"\n  warehouse_stackSize: 0\n  rubble_recyclingResultIdentifier:
+    \"\"\n  critter_templateIdentifier: \"\"\n  autoProducerRecipes: []\n  identifier:
+    _base_logistic_container_i\n"
+  name: Blueprint Storage
+  includeInCreativeMode: 1
+  assetPack: 
+  creativeModeCategory_str: _base_cmct_container
+  entitlementIdentifier: 
+  icon_identifier: logistic_container_i
+  stackSize: 10
+  isHiddenItem: 0
+  itemCategoryIdentifier: 
+  itemCategorySortOrder: 0
+  canBeTradedOnStation: 0
+  market_buyPrice: 0
+  market_sellPrice: 0
+  _baseWeightInGrams: 1
+  flags: 2
+  toggleableModeType: 0
+  toggleableModes: []
+  genericItemActionButtons: []
+  tooltipInfoMessage: 
+  skipForRunningIdxGeneration: 0
+  itemDestroyFlags: 0
+  conveyorMesh: {fileID: 0}
+  meshScale: {x: 0.2, y: 0.2, z: 0.2}
+  meshRotation: {x: 0, y: 0, z: 0, w: 1}
+  meshMaterial: {fileID: 0}
+  buildableObjectIdentifer: _erkle64_bpstorage
+  handheldSubType: 0
+  handheldObjectPrefab: {fileID: 0}
+  handheldObjectPrefab_droidOnly: {fileID: 0}
+  skinGroup: {fileID: 0}
+  handheld_miner_shakeRightArmOnUse: 0
+  handheld_defaultPowerPoleItemTemplate_str: 
+  supportsFocusMode: 0
+  miningTimeReductionInSec: 0
+  miningRange: 0
+  explosionRadius: 0
+  burnable_fuelValueKJ_str: 
+  burnable_residualItemTemplate_str: 
+  burnable_residualItemTemplate_count: 0
+  salesItem_salesItemCategoryIdentifier: 
+  salesItem_industryIdentifier: 
+  salesItem_currencyAmount: 0
+  salesItem_skyPlatformBaseCapacity: 0
+  salesItem_sortOrderASC: 0
+  salesItem_hiddenByResearchIdentifier: 
+  salesItem_salesPlatformBaseDemandPerDay: 25
+  salesItem_rdLabEfficiencyCrIdentifiers: []
+  salesCurrency_skyPlatformBaseCapacity: 0
+  salesCurrency_sortOrderASC: 0
+  salesCurrency_hiddenByResearchIdentifier: 
+  sciencePack_researchFrameSortingOrder: 0
+  sciencePack_color: {r: 0, g: 0, b: 0, a: 0}
+  railminer_prefab: {fileID: 0}
+  railminer_slotLength: 0
+  railminer_speedInSlotsPerTick: 0
+  railminer_minecartSpeedInSlotsPerTick: 0
+  railMiner_terrainTargetList_str: []
+  isMinecartItem: 0
+  material_minecartMaterial: {fileID: 0}
+  trainSignal_templateIdentifier: 
+  trainVehicle_templateIdentifier: 
+  alStarter_alotIdentifier: 
+  alStarter_sellItemTemplateIdentifier: 
+  warehouse_stackSize: 0
+  rubble_recyclingResultIdentifier: 
+  critter_templateIdentifier: 
+  autoProducerRecipes: []

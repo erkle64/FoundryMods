@@ -566,7 +566,7 @@ namespace Duplicationer
                                                     }
                                                 }
                                             }
-                                            GameRoot.addLockstepEvent(new BuildEntityEvent(usernameHash, partTemplate.parentItemTemplate.id, mode, worldPos, 0, Quaternion.identity, DuplicationerSystem.IsCheatModeEnabled ? 0 : 1, 0, false));
+                                            GameRoot.addLockstepEvent(new BuildEntityEvent(usernameHash, partTemplate.parentItemTemplate.id, mode, new int[] { worldPos.x, worldPos.y, worldPos.z }, 0, Quaternion.identity, DuplicationerSystem.IsCheatModeEnabled ? 0 : 1, 0, false));
                                         });
                                     }
                                 }
@@ -589,7 +589,7 @@ namespace Duplicationer
                                                     }
                                                 }
                                             }
-                                            GameRoot.addLockstepEvent(new BuildEntityEvent(usernameHash, blockTemplate.yieldItemOnDig_template.id, mode, worldPos, 0, Quaternion.identity, DuplicationerSystem.IsCheatModeEnabled ? 0 : 1, 0, false));
+                                            GameRoot.addLockstepEvent(new BuildEntityEvent(usernameHash, blockTemplate.yieldItemOnDig_template.id, mode, new int[] { worldPos.x, worldPos.y, worldPos.z }, 0, Quaternion.identity, DuplicationerSystem.IsCheatModeEnabled ? 0 : 1, 0, false));
                                         });
                                     }
                                     else if (blockTemplate != null && blockTemplate.parentBOT != null)
@@ -611,7 +611,7 @@ namespace Duplicationer
                                                         }
                                                     }
                                                 }
-                                                GameRoot.addLockstepEvent(new BuildEntityEvent(usernameHash, itemTemplate.id, mode, worldPos, 0, Quaternion.identity, DuplicationerSystem.IsCheatModeEnabled ? 0 : 1, 0, false));
+                                                GameRoot.addLockstepEvent(new BuildEntityEvent(usernameHash, itemTemplate.id, mode, new int[] { worldPos.x, worldPos.y, worldPos.z }, 0, Quaternion.identity, DuplicationerSystem.IsCheatModeEnabled ? 0 : 1, 0, false));
                                             });
                                         }
                                         else
@@ -700,7 +700,7 @@ namespace Duplicationer
                             usernameHash,
                             template.parentItemTemplate.id,
                             buildableObjectData.itemMode,
-                            worldPos,
+                            new int[] { worldPos.x, worldPos.y, worldPos.z },
                             buildableObjectData.orientationY,
                             buildableObjectData.orientationUnlocked,
                             DuplicationerSystem.IsCheatModeEnabled

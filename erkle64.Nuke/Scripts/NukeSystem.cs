@@ -175,7 +175,8 @@ namespace ErkleNuke
                     hs_chunksWithinExplosionRadius.Clear();
 
                     // call native building handling
-                    BuildingManager.buildingManager_processDynamiteExplosion(new v3i(dynamiteBlockPos), explosionRadius, 1, new v3(dynamitePos));
+                    AABB3D aabbExplosionArea = new AABB3D(0, 0, 0, 0, 0, 0); // only used for aabb based explosion type
+                    BuildingManager.buildingManager_processDynamiteExplosion(new v3i(dynamiteBlockPos), explosionRadius, 1, new v3(dynamitePos), aabbExplosionArea);
                 }
             }
 

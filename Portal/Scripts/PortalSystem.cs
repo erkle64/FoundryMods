@@ -293,7 +293,7 @@ namespace Portal
 
             Rpc.Lockstep.Run(PlayTeleportEffectsRPC, portalEntityId);
             Rpc.Lockstep.Run(PlayTeleportEffectsRPC, destinationEntityId);
-            GameRoot.addLockstepEvent(new Character.CharacterRelocateEvent(playerId, target.x, target.y, target.z));
+            GameRoot.addLockstepEvent(new Character.CharacterRelocateEvent(playerId, target.x, target.y, target.z, (long)(target.x * FixedPointMath.FPM_BASE), (long)(target.y * FixedPointMath.FPM_BASE), (long)(target.z * FixedPointMath.FPM_BASE)));
 
             return true;
         }

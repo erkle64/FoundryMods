@@ -8,16 +8,17 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: PortalTwo_Albedo
-  m_Shader: {fileID: 4800000, guid: fdf089107f59a1c4aab1c6e1d3ec29b3, type: 3}
+  m_Shader: {fileID: 4800000, guid: d88fd788cc6cf9f4098e786d338653f6, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _NORMALMAP
+  - _SURFACEMODE_NONE
   m_InvalidKeywords:
   - _MASKMAP
   - _NORMALMAP_TANGENT_SPACE
   m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
+  m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
   stringTagMap: {}
@@ -116,6 +117,10 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OcclusionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _PackedSurfaceProperties:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -252,6 +257,8 @@ Material:
     - _RimIntensity: 1
     - _RimLight: 0
     - _RimPower: 0.25
+    - _RotateAroundAxisSpeed: 100
+    - _RotateAroundYAxis: 0
     - _SSRefractionProjectionModel: 0
     - _ShowWear: 0
     - _Smoothness: 0.5
@@ -276,11 +283,14 @@ Material:
     - _StencilWriteMaskMV: 40
     - _SubsurfaceMask: 1
     - _SupportDecals: 1
+    - _SupportsFoundryDithering: 1
     - _SupportsFoundryInstancing: 1
+    - _SurfaceMode: 0
     - _SurfaceType: 0
     - _TexWorldScale: 1
     - _TexWorldScaleEmissive: 1
     - _Thickness: 1
+    - _Translucency: 1
     - _TransmissionEnable: 1
     - _TransparentBackfaceEnable: 0
     - _TransparentCullMode: 2
@@ -294,13 +304,15 @@ Material:
     - _UVEmissive: 0
     - _UVSec: 0
     - _UseEmissiveIntensity: 0
+    - _UseNormalMaps: 0
     - _UseShadowThreshold: 0
     - _UseSpecularMap: 0
     - _UseTintMask: 0
+    - _VisualVariations: 0
     - _WearBlendSharpness: 0.03
     - _WearFalloff: -0.56
-    - _WearNoiseScale: 0.5
-    - _WearProgression: 0.243
+    - _WearNoiseScale: 7
+    - _WearProgression: 0.428
     - _WearWidth: 0.126
     - _ZTestDepthEqualForOpaque: 3
     - _ZTestGBuffer: 4

@@ -15,9 +15,11 @@ MonoBehaviour:
   includeIngame: 1
   includeInBuild: 1
   includeInDemo: 1
+  buildTags: []
   identifier: _erkle64_portal
   modIdentifier: _base
   serializedOriginal: 
+  revision: 0
   name: Portal
   includeInCreativeMode: 0
   assetPack: 
@@ -26,6 +28,7 @@ MonoBehaviour:
   icon_identifier: portal
   stackSize: 10
   isHiddenItem: 0
+  forceShowInEditorDebugFrame: 0
   itemCategoryIdentifier: 
   itemCategorySortOrder: 0
   canBeTradedOnStation: 0
@@ -43,25 +46,35 @@ MonoBehaviour:
   meshScale: {x: 0, y: 0, z: 0}
   meshRotation: {x: 0, y: 0, z: 0, w: 1}
   meshMaterial: {fileID: 0}
+  recycling_hashIdentifier: 
+  recyclingData: []
   buildableObjectIdentifer: _erkle64_portal
   handheldSubType: 0
   handheldObjectPrefab: {fileID: 0}
   handheldObjectPrefab_droidOnly: {fileID: 0}
   skinGroup: {fileID: 0}
   handheld_miner_shakeRightArmOnUse: 0
-  handheld_defaultPowerPoleItemTemplate_str: 
   supportsFocusMode: 0
+  handheld_mouseDownModifierFlags: {x: 0, y: 0}
+  handheld_defaultPowerPoleItemTemplate_str: 
   miningTimeReductionInSec: 0
   miningRange: 0
   explosionRadius: 0
+  dynamite_explosionAABBData: []
+  dynamiteDestroyBedrock: 0
+  dynamitePrefab: {fileID: 0}
+  dynamite_placementType: 0
+  dynamite_explosionType: 0
+  dynamite_renderPreviewGo_identifier: 
+  drillBot_renderPreviewGo_identifier: 
   burnable_fuelValueKJ_str: 
   burnable_residualItemTemplate_str: 
   burnable_residualItemTemplate_count: 0
+  xenoPowerCore_multiplier_str: 1
   salesItem_salesItemCategoryIdentifier: 
   salesItem_industryIdentifier: 
   salesItem_currencyAmount: 0
   salesItem_skyPlatformBaseCapacity: 0
-  salesItem_sortOrderASC: 0
   salesItem_hiddenByResearchIdentifier: 
   salesItem_salesPlatformBaseDemandPerDay: 25
   salesItem_rdLabEfficiencyCrIdentifiers: []
@@ -84,4 +97,18 @@ MonoBehaviour:
   warehouse_stackSize: 0
   rubble_recyclingResultIdentifier: 
   critter_templateIdentifier: 
+  drillBot_size: 0
+  drillBot_powerConsumption_kjPerS_str: 
+  drillBot_rotationSpeedPerSec_str: 
+  drillBot_moveSpeedPerSec_str: 
+  drillBot_prefab: {fileID: 0}
+  drillBot_itemBufferSlotMap: []
+  explorationUnlockInput_sortOrderASC: 0
+  explorationUnlockInput_flavorText: 
+  workstationItem_effect: 0
+  workstationItem_data01: 0
+  workstationItem_data02: 0
+  workstationItem_requiredTags: []
+  workstationItem_excludedTags: []
+  workstationModel: {fileID: 0}
   autoProducerRecipes: []

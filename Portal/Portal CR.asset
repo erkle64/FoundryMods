@@ -15,6 +15,7 @@ MonoBehaviour:
   includeIngame: 1
   includeInBuild: 1
   includeInDemo: 1
+  buildTags: []
   identifier: _erkle64_portal
   modIdentifier: _base
   serializedOriginal: "template:\n  hideInDemo: False\n  name: Assembler III\n  entitlementIdentifier:
@@ -34,6 +35,7 @@ MonoBehaviour:
     _base_firmarlite_sheet\\n150/m _base_eic_ii\\n[OUTPUT]\\n15/m _base_assembler_iii\\n===[SPEED
     2]==============\\n[INPUT]\\n20/m _base_assembler_ii\\n400/m _base_firmarlite_sheet\\n200/m
     _base_eic_ii\\n[OUTPUT]\\n20/m _base_assembler_iii\\n\"\n  identifier: _base_assembler_iii\n"
+  revision: 0
   hideInDemo: 0
   name: Portal
   entitlementIdentifier: 

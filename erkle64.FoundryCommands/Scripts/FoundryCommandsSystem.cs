@@ -235,7 +235,7 @@ namespace FoundryCommands
                                 _lastPositionAtTeleport = character.position;
                                 _hasTeleported = true;
                                 GameRoot.addLockstepEvent(new GameRoot.ChatMessageEvent(character.usernameHash, string.Format("Teleporting to '{0}' at {1}, {2}, {3}", wp.description, wp.waypointPosition.x.ToString(), wp.waypointPosition.y.ToString(), wp.waypointPosition.z.ToString()), 0, false));
-                                GameRoot.addLockstepEvent(new Character.CharacterRelocateEvent(character.usernameHash, wp.waypointPosition.x, wp.waypointPosition.y + 0.5f, wp.waypointPosition.z));
+                                GameRoot.addLockstepEvent(new Character.CharacterRelocateEvent(character.usernameHash, wp.waypointPosition.x, wp.waypointPosition.y + 0.5f, wp.waypointPosition.z, wp.waypointPosition.x * FixedPointMath.FPM_BASE, (long)((wp.waypointPosition.y + 0.5f) * FixedPointMath.FPM_BASE), wp.waypointPosition.z * FixedPointMath.FPM_BASE));
                             }
                             else
                             {
@@ -277,7 +277,7 @@ namespace FoundryCommands
                     if(chunk != null)
                     {
                         GameRoot.addLockstepEvent(new GameRoot.ChatMessageEvent(character.usernameHash, $"Returning to {targetCube.x}, {targetCube.y}, {targetCube.z}", 0, false));
-                        GameRoot.addLockstepEvent(new Character.CharacterRelocateEvent(character.usernameHash, _lastPositionAtTeleport.x, _lastPositionAtTeleport.y, _lastPositionAtTeleport.z));
+                        GameRoot.addLockstepEvent(new Character.CharacterRelocateEvent(character.usernameHash, _lastPositionAtTeleport.x, _lastPositionAtTeleport.y, _lastPositionAtTeleport.z, (long)(_lastPositionAtTeleport.x * FixedPointMath.FPM_BASE), (long)(_lastPositionAtTeleport.y * FixedPointMath.FPM_BASE), (long)(_lastPositionAtTeleport.z * FixedPointMath.FPM_BASE)));
                         _lastPositionAtTeleport = character.position;
                     }
                     else
@@ -307,7 +307,8 @@ namespace FoundryCommands
                         out var isPlaceholder,
                         out var isTrainPlaceholder,
                         out var placeholderId,
-                        out var powerlineGO);
+                        out var powerlineGO,
+                        out var drillBotGO);
                     if (!hit || bogo == null || isPlaceholder) return;
 
                     var interval = 1.0f;

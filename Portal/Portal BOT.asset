@@ -15,6 +15,7 @@ MonoBehaviour:
   includeIngame: 1
   includeInBuild: 1
   includeInDemo: 1
+  buildTags: []
   identifier: _erkle64_portal
   modIdentifier: _base
   serializedOriginal: "template:\n  type: Battery\n  simulationType: NoSimulation\n 
@@ -212,7 +213,6 @@ MonoBehaviour:
   simulationType: 0
   simulationSleepFlags: 0
   simTypeSleep_initial: 0
-  isSuperBuilding: 0
   size: {x: 5, y: 4, z: 3}
   validateTerrainTileColliders: 1
   prefabOnDisk: {fileID: 1556130292722498, guid: f6273ab89c1f9a04b86d7a8691c1b3a6, type: 3}
@@ -231,6 +231,7 @@ MonoBehaviour:
   customSnapMode: 0
   demolitionTimeSec: 3
   canBeDestroyedByDynamite: 0
+  cannotBeDemolished: 0
   conversionGroup_str: 
   isVisibleOnMap: 1
   mapColorPriority: 40
@@ -251,6 +252,8 @@ MonoBehaviour:
   canBeRotatedAroundXAxis: 0
   additionalAABBs_input: []
   hasToBeOnLava: 0
+  requiresResourceNode: 0
+  requiredResourceNodeIdentifier: 
   useNativeTileColliders: 1
   isModularBuilding: 0
   modularBuildingType: 2
@@ -294,7 +297,7 @@ MonoBehaviour:
     lightIntensity: 15
     lightType: 0
   spawnFlyingDebrisWhenExploding: 1
-  debrisWithExplosionForcePrefab: {fileID: 129258123506043949, guid: 60f55ce0325dd794682404385a98b631, type: 3}
+  debrisWithExplosionForcePrefab: {fileID: 129258123506043949, guid: f549ccdd163879849a6f5bd55f4b5007, type: 3}
   itemBufferSlotMap: []
   hasRailings: 0
   walkway_mesh_noRailings:
@@ -362,6 +365,17 @@ MonoBehaviour:
   fbm_sendUpdateEventsForRegularFluidBoxes: 0
   fbm_fluidBoxes: []
   fbm_ioFluidBoxes: []
+  hasWorkstationEffectManager: 0
+  workstationEffectTags: []
+  hasSurroundingWorldDecor: 0
+  surroundingWorldDecor_bot_identifier: 
+  surroundingWorlDecor_spawnChance: 0
+  isBuriedEntity: 0
+  buriedEntity_maxAmountPerChunk: 0
+  buriedEntity_spawnChancePercentage: 0
+  buriedEntity_burialDepth_min: 0
+  buriedEntity_burialDepth_max: 0
+  buriedEntity_minRequiredMiningForce: 0
   droneMiner_oreSearchRadius: 0
   droneMiner_itemCapacityPerDrone: 0
   droneMiner_miningSpeed_str: 
@@ -376,6 +390,9 @@ MonoBehaviour:
   dissolver_elementalConsumptionPerSecond_str: 
   dissolver_solidsPerSecond_str: 
   dissolver_isElemental: 0
+  recycler_hashIdentifier: 
+  recycler_itemsPerMinute: 0
+  stationShuttlePad_droneYOffset: 0
   droneTransport_isStartStation: 0
   droneTransport_energyConsumptionPerSecondFlightTime_kj_str: 
   droneTransport_energyRechargeRatePerSecond_kj_str: 
@@ -411,10 +428,15 @@ MonoBehaviour:
     y: 0
     z: 0
   storage_slotSize: 0
+  storage_allowPersonalLogisticsAccess: 0
   producerRecipeType: 0
   producer_recipeTimeModifier_str: 
   producer_audioClip_active: {fileID: 0}
   producer_recipeType_fixed: 
+  producer_showFixedCrInTooltip: 0
+  producer_ttInputsAsPerSecValues: 0
+  producer_ttOutputsAsPerSecValues: 0
+  producer_fixedCrInfoText: 
   producer_recipeType_tags: []
   autoProducer_recipeTimeModifier_str: 
   autoProducer_audioClip_active: {fileID: 0}
@@ -461,6 +483,7 @@ MonoBehaviour:
   shippingPad_spp_preventDownShipping: 0
   pipe_hasVisualUpdate: 0
   pipe_visualUpdateFluidBoxTemplateIdx: 0
+  pipe_dragMesh: {fileID: 0}
   transformer_transmissionRate_kjPerS_str: 
   transformer_audioClip_active: {fileID: 0}
   lvgGenerator_transmissionRate_kjPerS_str: 
@@ -487,12 +510,11 @@ MonoBehaviour:
   worldDecor_plantSeedIdentifier: 
   worldDecor_allowedGrowableTerrainBlocks: []
   worldDecor_anchorType: 0
-  superBuilding_levels: []
-  superBuilding_researchUnlocks_str: []
-  superBuilding_allowedLoaderPositions: []
-  superBuilding_loaderIndicator_rotY: 0
-  superBuilding_refundOnDemolish: 0
-  researchLab_sciencePack_str: 
+  worldDecor_hasHeightBasedSpawnProbability: 0
+  worldDecor_heightBasedSpawnProbability: []
+  worldDecor_heightBasedMaxSpawnAmount_lavaCave: 0
+  worldDecor_heightBasedMaxSpawnAmount_tunnels: 0
+  worldDecor_heightBasedMaxSpawnAmount_surface: 0
   researchEntity_scienceItems: []
   researchEntity_scienceItemsVisibilityResearch: []
   researchEntity_powerDemand_kjPerSecond_data: 
@@ -531,7 +553,9 @@ MonoBehaviour:
   door_secondsToOpen: 1
   door_audioClip_openClose_trigger: {fileID: 0}
   door_audioClip_openClose_loop: {fileID: 0}
+  door_isStationHangar: 0
   geologicalScanner_audioClip_active: {fileID: 0}
+  genericEntity_alternativeDeconstructionItemIdentifier: 
   blastFurnace_speedModifier: 
   blastFurnace_outputMultiplier: 
   blastFurnace_optimalRunningTemp: 
@@ -569,6 +593,12 @@ MonoBehaviour:
   modularFluidTank_topModuleBOT_identifier: 
   modularFluidTank_fluidCapacityPerTower_str: 
   trainLoadingStation_itemType: 0
+  trainLoadingStation_inventorySize: 0
+  trainLoadingStation_connectionTimeInTicksNear: 60
+  trainLoadingStation_connectionTimeInTicksFar: 120
+  trainLoadingStation_idlePosition: {x: 0, y: 0}
+  trainLoadingStation_connectionPosition01: {x: 0, y: 0}
+  trainLoadingStation_connectionPosition02: {x: 0, y: 0}
   trainTrackLinkable_trackSearchOffset01: {x: 0, y: 0, z: 0}
   trainTrackLinkable_trackSearchOffset02: {x: 0, y: 0, z: 0}
   trainTrackLinkable_compatibleTrackTemplates: []
@@ -596,13 +626,7 @@ MonoBehaviour:
   al_producer_localOffset_outputTarget: {x: 0, y: 0, z: 0}
   al_producer_splineDataContainer_input: {fileID: 0}
   al_producer_splineDataContainer_output: {fileID: 0}
-  al_endConsumer_itemCapacity: 0
-  al_endConsumer_interactionPoints: []
-  al_endConsumer_slotWidth: 0
-  al_endConsumer_speedInSlotsPerTick: 0
-  al_endConsumer_localOffset_inputOrigin: {x: 0, y: 0, z: 0}
-  al_endConsumer_localOffset_inputTarget: {x: 0, y: 0, z: 0}
-  al_endConsumer_splineDataContainer: {fileID: 0}
+  al_endConsumer_slotCount: 0
   al_merger_speedInSlotsPerTick: 0
   al_merger_slotWidth_input01: 0
   al_merger_slotWidth_input02: 0
@@ -696,6 +720,10 @@ MonoBehaviour:
   constructionDronePort_energyBuffer_kj_str: 
   constructionDronePort_energyConsumptionPerItem_kj_str: 
   constructionDronePort_energyRechargeRate_kjPerS_str: 
+  constructionDronePort_miningDronePrefab: {fileID: 0}
+  constructionDronePort_miningDroneSpeedPerSecond_str: 
+  constructionDronePort_miningDroneCount: 0
+  constructionDronePort_shipMiningInventorySize: 0
   transportDronePort_transportDronePrefab: {fileID: 0}
   transportDronePort_dronePositions: []
   transportDronePort_droneInventoryCapacity: 0
@@ -710,9 +738,6 @@ MonoBehaviour:
   constructionWarehouse_interactionPoints: []
   constructionWarehouse_recyclingSpeedItemsPerSecond: 0
   constructionWarehouse_powerDemandRecycling_kjPerS_str: 
-  greenhouse_arrayInputs: []
-  greenhouse_doubleOutputPercentChance: 0
-  greenhouse_craftingTimeMs: 0
   salesItemWarehouse_interactionPoints: []
   salesItemWarehouse_itemCapacity: 0
   salesCurrencyWarehouse_interactionPoints: []
@@ -737,39 +762,64 @@ MonoBehaviour:
   dataSourceEntity_mode: 0
   nppReactor_arrayInputs: []
   nppReactor_coolingLiquid_identifier: 
-  nppReactor_baseCoolingLiquidDemandPerTick: 0
-  nppReactor_additionalCoolingLiquidDemandPerTick: 0
+  nppReactor_baseCoolingLiquidDemandPerTick_str: 
+  nppReactor_additionalCoolingLiquidDemandPerTick_str: 
   nppReactor_optionalCoolingLiquid_identifier: 
   nppReactor_output_elementalTemplate_identifier: 
-  nppReactor_outputPerTick: 0
+  nppReactor_outputPerTick_str: 
   nppReactor_nominalTemperature: 0
   nppReactor_targetTemperature: 0
   nppReactor_criticalTemperature: 0
   nppReactor_catastrophicTemperature: 0
   nppReactor_cooldownTemperature: 0
-  nppReactor_heatGainPerTick: 0
-  nppReactor_heatLossPerTick: 0
+  nppReactor_heatGainPerTick_str: 
+  nppReactor_heatLossPerTick_str: 
   nppReactor_emergencyVentBoTIdentifier: 
-  nppReactor_controlRodsMovePercentagePerTick: 0
+  nppReactor_controlRodsMovePercentagePerTick_str: 
   nppSteamGenerator_reactorLoop_input_identifier: 
   nppSteamGenerator_reactorLoop_output_identifier: 
   nppSteamGenerator_coolingLoop_input_identifier: 
   nppSteamGenerator_coolingLoop_output_identifier: 
-  nppSteamGenerator_conversionRate_reactorInputToCoolInput: 0
-  nppSteamGenerator_conversionRate_reactorInputToReactorOutput: 0
-  nppSteamGenerator_conversionRate_reactorInputToCoolingOutput: 0
-  nppSteamGenerator_maxInputPertick: 0
+  nppSteamGenerator_conversionRate_reactorInputToCoolInput_str: 
+  nppSteamGenerator_conversionRate_reactorInputToReactorOutput_str: 
+  nppSteamGenerator_conversionRate_reactorInputToCoolingOutput_str: 
+  nppSteamGenerator_maxInputPertick_str: 
   nppSteamTurbine_input_identifier: 
-  nppSteamTurbine_maxInputAmountPerTick: 0
+  nppSteamTurbine_maxInputAmountPerTick_str: 
   nppSteamTurbine_output_identifier: 
-  nppSteamTurbine_inputToOutputConversionRate: 0
+  nppSteamTurbine_inputToOutputConversionRate_str: 
   nppSteamTurbine_powerGenertaionRate_kjPerSec: 0
-  nppSteamTurbine_efficiency: 0
+  nppSteamTurbine_efficiency_str: 
   nppCoolingTower_inputTurbine_identifier: 
-  nppCoolingTower_inputTurbine_maxInputPerTick: 0
+  nppCoolingTower_inputTurbine_maxInputPerTick_str: 
   nppCoolingTower_inputExtra_identifier: 
-  nppCoolingTower_turbineInputToExtraInputConversionRate: 0
+  nppCoolingTower_turbineInputToExtraInputConversionRate_str: 
   nppCoolingTower_inputCooling_identifier: 
-  nppCoolingTower_turbineInputToCoolingInputConversionRate: 0
+  nppCoolingTower_turbineInputToCoolingInputConversionRate_str: 
   nppCoolingTower_output_identifier: 
-  nppCoolingTower_turbineInputToOutputConversionRate: 0
+  nppCoolingTower_turbineInputToOutputConversionRate_str: 
+  trainSignal_signalType: 0
+  trainSignal_allowedSide: 0
+  trainSignal_signalLightCount: 0
+  trainSignal_signalStateMaterials: []
+  trainSignal_defaultSignalLightMaterial: {fileID: 0}
+  trainStationCSM_snapGridSize: 4
+  trainStationCSM_offset: 0
+  workstation_robotSlotCount: 1
+  workstation_effectBoundsOffset:
+    x: 0
+    y: 0
+    z: 0
+  workstation_effectBoundsSize:
+    x: 0
+    y: 0
+    z: 0
+  workstation_powerCoreSlots: 0
+  workstation_effectScaleIncreasePerPowerCore_str: 
+  workstation_assemblyLineRobotLocatorOffset: 0
+  logisticsTower_voxelRange: 0
+  endlessMiner_outputTemplateIdentifier: 
+  endlessMiner_ticksPerItem: 0
+  endlessMiner_powerDemandMining_kjPerSec_str: 
+  endlessMiner_powerCoreSlots: 0
+  endlessMiner_speedIncreasePerPowerCore_str: 

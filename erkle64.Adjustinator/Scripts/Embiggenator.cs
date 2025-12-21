@@ -37,6 +37,9 @@ namespace Embiggenator
     {
         public static LogSource log = new LogSource("Embiggenator");
 
+        private static float _characterFrameOriginalWidth = 0f;
+        private static readonly System.Collections.Generic.Dictionary<RectTransform, float> _siblingsX = new System.Collections.Generic.Dictionary<RectTransform, float>();
+
         [HarmonyPatch(typeof(CharacterManager), nameof(CharacterManager.joinWorld))]
         [HarmonyPostfix]
         public static void joinWorld(Character character, uint clientId)
@@ -60,9 +63,9 @@ namespace Embiggenator
             }
         }
 
-        [HarmonyPatch(typeof(CharacterInventoryFrame), nameof(CharacterInventoryFrame.Init))]
+        [HarmonyPatch(typeof(InventorySubFrame), nameof(InventorySubFrame.Init))]
         [HarmonyPostfix]
-        public static void CharacterInventoryFrame_Init(CharacterInventoryFrame __instance)
+        public static void InventorySubFrame_Init(InventorySubFrame __instance)
         {
             if (!Config.enabled.value) return;
 
@@ -70,8 +73,23 @@ namespace Embiggenator
 
             log.Log($"Creating scrollbox for character inventory frame.");
 
-            var rectTransform = __instance.transform as RectTransform;
+            var rectTransform = __instance.transform.parent as RectTransform;
             var originalWidth = rectTransform.sizeDelta.x;
+
+            var containerTransform = rectTransform.parent;
+            _siblingsX.Clear();
+            // iterate through sibling RectTransforms and store their x anchoredPositions
+            foreach (RectTransform sibling in containerTransform)
+            {
+                if (sibling != rectTransform)
+                {
+                    _siblingsX[sibling] = sibling.anchoredPosition.x;
+                }
+            }
+
+            var characterFrame = __instance.itemSlotContainer.GetComponentInParent<CharacterFrame>();
+            var characterFrameTransform = characterFrame.transform as RectTransform;
+            _characterFrameOriginalWidth = characterFrameTransform.sizeDelta.x;
 
             UIBuilder.BeginWith(__instance.itemSlotContainer.transform.parent.gameObject)
                 .Element_ScrollBox("ScrollBox", contentBuilder =>
@@ -79,24 +97,33 @@ namespace Embiggenator
                     __instance.itemSlotContainer.transform.SetParent(contentBuilder.GameObject.transform.parent, false);
                     Object.DestroyImmediate(contentBuilder.GameObject);
                 })
-                    .WithComponent<ScrollRect>(scrollBox =>
-                    {
-                        scrollBox.horizontal = false;
-                        scrollBox.content = __instance.itemSlotContainer.GetComponent<RectTransform>();
-                        scrollBox.movementType = ScrollRect.MovementType.Clamped;
-                        scrollBox.scrollSensitivity = Config.scrollSpeed.value;
-                    })
-                    .With(scrollBox =>
-                    {
-                        var grid = __instance.itemSlotContainer.GetComponent<GridLayoutGroup>();
-                        var maxSize = grid.cellSize.y * Config.maxVerticalSize.value + grid.spacing.y * (Config.maxVerticalSize.value - 1);
-                        scrollBox.AddComponent<AdaptablePreferred>()
-                            .Setup(__instance.itemSlotContainer.GetComponent<RectTransform>(), true, maxSize, isOversize =>
+                .WithComponent<ScrollRect>(scrollBox =>
+                {
+                    scrollBox.horizontal = false;
+                    scrollBox.content = __instance.itemSlotContainer.GetComponent<RectTransform>();
+                    scrollBox.movementType = ScrollRect.MovementType.Clamped;
+                    scrollBox.scrollSensitivity = Config.scrollSpeed.value;
+                })
+                .With(scrollBox =>
+                {
+                    var grid = __instance.itemSlotContainer.GetComponent<GridLayoutGroup>();
+                    var maxSize = grid.cellSize.y * Config.maxVerticalSize.value + grid.spacing.y * (Config.maxVerticalSize.value - 1);
+                    scrollBox.AddComponent<AdaptablePreferred>()
+                        .Setup(__instance.itemSlotContainer.GetComponent<RectTransform>(), true, maxSize, isOversize =>
+                        {
+                            rectTransform.sizeDelta = new Vector2(originalWidth + (isOversize ? 20f : 0f), rectTransform.sizeDelta.y);
+
+                            foreach (var kvp in _siblingsX)
                             {
-                                rectTransform.sizeDelta = new Vector2(originalWidth + (isOversize ? 20f : 0f), rectTransform.sizeDelta.y);
-                            });
-                        scrollBox.transform.SetAsFirstSibling();
-                    })
+                                var sibling = kvp.Key;
+                                var originalX = kvp.Value;
+                                sibling.anchoredPosition = new Vector2(originalX - (isOversize ? 20f : 0f), sibling.anchoredPosition.y);
+                            }
+
+                            characterFrameTransform.sizeDelta = new Vector2(_characterFrameOriginalWidth + (isOversize ? 20f : 0f), characterFrameTransform.sizeDelta.y);
+                        });
+                    scrollBox.transform.SetAsFirstSibling();
+                })
                 .Done
                 .End();
 
@@ -104,6 +131,14 @@ namespace Embiggenator
                 .SetRectTransform(0, 0, 0, 0, 0, 1, 0, 1, 1, 1)
                 .AutoSize(ContentSizeFitter.FitMode.Unconstrained, ContentSizeFitter.FitMode.PreferredSize)
                 .End();
+        }
+
+        [HarmonyPatch(typeof(CharacterFrame), nameof(CharacterFrame.prepareFrameMode))]
+        [HarmonyPostfix]
+        public static void CharacterFrame_prepareFrameMode(CharacterFrame __instance)
+        {
+            if (!Config.enabled.value) return;
+            _characterFrameOriginalWidth = __instance.rectTransform.sizeDelta.x;
         }
 
         [HarmonyPatch(typeof(CharacterManager), nameof(CharacterManager.increasePlayerInventorySizeByResearch))]

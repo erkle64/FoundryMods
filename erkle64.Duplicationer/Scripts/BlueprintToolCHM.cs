@@ -398,7 +398,8 @@ namespace Duplicationer
                         BuildingManager.getWidthFromOrientation(buildableObjectTemplate, (BuildingManager.BuildOrientation)buildableObjectData.orientationY, out wx, out wy, out wz);
 
                     byte errorCodeRaw = 0;
-                    BuildingManager.buildingManager_validateConstruction_buildableEntityWrapper(new v3i(worldPos.x, worldPos.y, worldPos.z), buildableObjectData.orientationY, buildableObjectData.orientationUnlocked, buildableObjectData.templateId, ref errorCodeRaw, IOBool.iofalse);
+                    v3i[] powerLineCollisionArray = new v3i[0];
+                    BuildingManager.buildingManager_validateConstruction_buildableEntityWrapper(new v3i(worldPos.x, worldPos.y, worldPos.z), buildableObjectData.orientationY, buildableObjectData.orientationUnlocked, buildableObjectData.templateId, ref errorCodeRaw, IOBool.iofalse, powerLineCollisionArray, 0);
                     var errorCode = (BuildingManager.CheckBuildableErrorCode)errorCodeRaw;
 
                     if (buildableObjectPlaceholder.ExtraBoundingBoxes != null)
@@ -1041,7 +1042,7 @@ namespace Duplicationer
                                 else if (doTerrain && terrainData > 0 && terrainData < GameRoot.BUILDING_PART_ARRAY_IDX_START && terrainData < shouldRemove.Count && shouldRemove[terrainData])
                                 {
                                     var worldPos = new Vector3Int(wx, wy, wz);
-                                    ActionManager.AddQueuedEvent(() => GameRoot.addLockstepEvent(new Character.RemoveTerrainEvent(characterHash, worldPos, ulong.MaxValue)));
+                                    ActionManager.AddQueuedEvent(() => GameRoot.addLockstepEvent(new Character.RemoveTerrainEvent(characterHash, worldPos, ulong.MaxValue, false)));
                                     ++blocksRemoved;
                                 }
                             }
@@ -1117,7 +1118,7 @@ namespace Duplicationer
                             else if (doTerrain && terrainData > 0 && terrainData < GameRoot.BUILDING_PART_ARRAY_IDX_START && terrainData < shouldRemove.Count && shouldRemove[terrainData])
                             {
                                 var worldPos = new Vector3Int(wx, wy, wz);
-                                ActionManager.AddQueuedEvent(() => GameRoot.addLockstepEvent(new Character.RemoveTerrainEvent(characterHash, worldPos, 0)));
+                                ActionManager.AddQueuedEvent(() => GameRoot.addLockstepEvent(new Character.RemoveTerrainEvent(characterHash, worldPos, 0, false)));
                                 ++blocksRemoved;
                             }
                         }

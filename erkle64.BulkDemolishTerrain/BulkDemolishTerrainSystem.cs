@@ -349,7 +349,7 @@ namespace BulkDemolishTerrain
                                             }
                                             else
                                             {
-                                                ActionManager.AddQueuedEvent(() => GameRoot.addLockstepEvent(new Character.RemoveTerrainEvent(characterHash, coords, 0)));
+                                                ActionManager.AddQueuedEvent(() => GameRoot.addLockstepEvent(new Character.RemoveTerrainEvent(characterHash, coords, 0, false)));
                                             }
                                         }
                                         if (terrainData < isOre.Count && isOre[terrainData])

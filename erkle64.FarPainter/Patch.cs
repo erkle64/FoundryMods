@@ -28,7 +28,7 @@ namespace FarPainter
         public static readonly FieldInfo bobTimer = typeof(ColorToolHH).GetField("bobTimer", BindingFlags.NonPublic | BindingFlags.Instance);
         public static readonly FieldInfo lastTintColor = typeof(ColorToolHH).GetField("lastTintColor", BindingFlags.NonPublic | BindingFlags.Instance);
         public static readonly FieldInfo lastPlayedAudioClipIdx = typeof(ColorToolHH).GetField("lastPlayedAudioClipIdx", BindingFlags.NonPublic | BindingFlags.Instance);
-        public static readonly FieldInfo lastColorizedObject_entityId = typeof(ColorToolHH).GetField("lastColorizedObject_entityId", BindingFlags.NonPublic | BindingFlags.Instance);
+        public static readonly FieldInfo lastColorizedObject = typeof(ColorToolHH).GetField("lastColorizedObject", BindingFlags.NonPublic | BindingFlags.Instance);
         public static readonly FieldInfo lastColorizedObject_isReset = typeof(ColorToolHH).GetField("lastColorizedObject_isReset", BindingFlags.NonPublic | BindingFlags.Instance);
         public static readonly FieldInfo lastColorizationTime = typeof(ColorToolHH).GetField("lastColorizationTime", BindingFlags.NonPublic | BindingFlags.Instance);
 
@@ -59,13 +59,12 @@ namespace FarPainter
                 allowAction = false;
             if (ScreenPanelRaycaster.isClientCharacterLookingAtScreenPanel())
                 allowAction = false;
-            bool actionHeld = allowAction && GlobalStateManager.getRewiredPlayer0().GetButton("Action");
+            bool isMouseDown = allowAction && GlobalStateManager.getRewiredPlayer0().GetButton("Action");
             if (allowAlternateAction && GlobalStateManager.getRewiredPlayer0().GetButtonDown("Alternate Action"))
                 ColorToolFrame.showFrame();
             bool modifier1Held = GlobalStateManager.getRewiredPlayer0().GetButton("Modifier 1");
             bool modifier2Held = GlobalStateManager.getRewiredPlayer0().GetButton("Modifier 2");
-            bool lookingAtBuilding = false;
-            bool lookingAtColorizableBuilding = false;
+
             Ray ray = new Ray(GameRoot.getMainCamera().transform.position, GameRoot.getMainCamera().transform.forward);
             RaycastHit[] raycastHits = (RaycastHit[])Patch.raycastHits.GetValue(__instance);
             if (_bulkPaintDragging)
@@ -116,7 +115,7 @@ namespace FarPainter
                             {
                                 if (bogo is IHasColorManager hasColorManager && hasColorManager.ColorManager.colorMeshRenderers.Length > 0)
                                 {
-                                    GameRoot.addLockstepEvent(new ColorizeObjectEvent(__instance.relatedCharacter.usernameHash, bogo.relatedEntityId, color_r, color_g, color_b, false));
+                                    GameRoot.addLockstepEvent(new ColorizeObjectEvent(__instance.relatedCharacter.usernameHash, bogo.relatedEntityId, color_r, color_g, color_b, false, false));
                                 }
                             }
                         }
@@ -126,7 +125,7 @@ namespace FarPainter
                         if (!__instance.audioSource_painting.isPlaying)
                             __instance.audioSource_painting.PlayOneShot(ResourceDB.resourceLinker.audioClip_paintingStrokes[(int)lastPlayedAudioClipIdx.GetValue(__instance)]);
                     }
-                    else if(GlobalStateManager.getRewiredPlayer0().GetButtonDown("Alternate Action"))
+                    else if (GlobalStateManager.getRewiredPlayer0().GetButtonDown("Alternate Action"))
                     {
                         _bulkPaintDragging = false;
                     }
@@ -182,56 +181,103 @@ namespace FarPainter
             }
             else
             {
-                int count = Physics.RaycastNonAlloc(ray, raycastHits, Config.paintRange.value, GlobalStaticCache.s_LayerMask_BuildableObjectFullSize | GlobalStaticCache.s_LayerMask_BuildableObjectPartialSize);
-                if (count > 0)
+                // do raycast to find potential colorization target
+                bool hasAnyTarget = false;
+                bool hasValidTarget = false;
+                Ray r = new Ray(GameRoot.getMainCamera().transform.position, GameRoot.getMainCamera().transform.forward);
+                int layerMask = GlobalStaticCache.s_LayerMask_BuildableObjectFullSize | GlobalStaticCache.s_LayerMask_BuildableObjectPartialSize | GlobalStaticCache.s_LayerMask_TrainVehicle;
+                int hitCount = Physics.RaycastNonAlloc(r, raycastHits, Config.paintRange.value, layerMask);
+                if (hitCount > 0)
                 {
-                    BuildableObjectGO componentInParent = raycastHits[raycastHits.findNearestHit(count)].collider.gameObject.GetComponentInParent<BuildableObjectGO>();
-                    if (componentInParent != null && componentInParent.template != null)
+                    hasAnyTarget = true;
+
+                    int nearestHitIdx = raycastHits.findNearestHit(hitCount);
+                    var hitGameObject = raycastHits[nearestHitIdx].collider.gameObject;
+                    var hasColorManager = hitGameObject.GetComponentInParent<IHasColorManager>();
+                    if (hasColorManager != null)
                     {
-                        lookingAtBuilding = true;
-                        if (componentInParent is IHasColorManager hasColorManager && hasColorManager.ColorManager.colorMeshRenderers.Length > 0)
+                        hasValidTarget = true;
+
+                        // if mouse down -> colorize
+                        if (isMouseDown == true)
                         {
-                            lookingAtColorizableBuilding = true;
-                            if (actionHeld)
+                            // check if this should be a reset to default color
+                            bool isReset = false;
+                            if (GlobalStateManager.getRewiredPlayer0().GetButton("Modifier 2") == true)
+                                isReset = true;
+
+                            // we allow holding down mouse button to continuously paint, but if we don't add a timer per entity id,
+                            // we will send an event each frame.
+                            bool allowEvent = true;
+                            if ((IHasColorManager)lastColorizedObject.GetValue(__instance) == hasColorManager && (bool)lastColorizedObject_isReset.GetValue(__instance) == isReset && (Time.realtimeSinceStartup - (float)lastColorizationTime.GetValue(__instance)) < 1f)
+                                allowEvent = false;
+
+                            // send colorization event
+                            if (allowEvent == true)
                             {
-                                bool isReset = false;
-                                if (modifier2Held)
-                                    isReset = true;
-                                bool isNewObject = true;
-                                if ((ulong)lastColorizedObject_entityId.GetValue(__instance) == componentInParent.relatedEntityId && (bool)lastColorizedObject_isReset.GetValue(__instance) == isReset && Time.realtimeSinceStartup - (float)lastColorizationTime.GetValue(__instance) < 1.0f)
-                                    isNewObject = false;
-                                if (isNewObject)
+                                // send event
+                                byte color_r = (byte)Mathf.Clamp(Mathf.RoundToInt(__instance.relatedCharacter.clientData.lastSelectedColor.r * 255f), 0, byte.MaxValue);
+                                byte color_g = (byte)Mathf.Clamp(Mathf.RoundToInt(__instance.relatedCharacter.clientData.lastSelectedColor.g * 255f), 0, byte.MaxValue);
+                                byte color_b = (byte)Mathf.Clamp(Mathf.RoundToInt(__instance.relatedCharacter.clientData.lastSelectedColor.b * 255f), 0, byte.MaxValue);
+
+                                var boGO = hasColorManager as BuildableObjectGO;
+                                if (boGO != null)
                                 {
-                                    byte color_r = (byte)Mathf.Clamp(Mathf.RoundToInt(__instance.relatedCharacter.clientData.lastSelectedColor.r * byte.MaxValue), 0, byte.MaxValue);
-                                    byte color_g = (byte)Mathf.Clamp(Mathf.RoundToInt(__instance.relatedCharacter.clientData.lastSelectedColor.g * byte.MaxValue), 0, byte.MaxValue);
-                                    byte color_b = (byte)Mathf.Clamp(Mathf.RoundToInt(__instance.relatedCharacter.clientData.lastSelectedColor.b * byte.MaxValue), 0, byte.MaxValue);
-                                    GameRoot.addLockstepEvent(new ColorizeObjectEvent(__instance.relatedCharacter.usernameHash, componentInParent.relatedEntityId, color_r, color_g, color_b, isReset));
-                                    lastPlayedAudioClipIdx.SetValue(__instance, (int)lastPlayedAudioClipIdx.GetValue(__instance) + 1);
-                                    lastPlayedAudioClipIdx.SetValue(__instance, (int)lastPlayedAudioClipIdx.GetValue(__instance) % ResourceDB.resourceLinker.audioClip_paintingStrokes.Length);
-                                    if (!__instance.audioSource_painting.isPlaying)
-                                        __instance.audioSource_painting.PlayOneShot(ResourceDB.resourceLinker.audioClip_paintingStrokes[(int)lastPlayedAudioClipIdx.GetValue(__instance)]);
-                                    lastColorizedObject_entityId.SetValue(__instance, componentInParent.relatedEntityId);
-                                    lastColorizedObject_isReset.SetValue(__instance, isReset);
-                                    lastColorizationTime.SetValue(__instance, Time.realtimeSinceStartup);
+                                    var lsEvent = new ColorizeObjectEvent(__instance.relatedCharacter.usernameHash, boGO.relatedEntityId, color_r, color_g, color_b, isReset, false);
+                                    GameRoot.addLockstepEvent(lsEvent);
+
+                                    boGO.tryGetVisualSMI(out var smi);
+                                    hasColorManager.ColorManager.updateColor(smi, new Color(color_r / 255f, (byte)color_g / 255f, (byte)color_b / 255f));
+
+                                    if (StreamingProxySystem.get().hasProxy<BuildableObjectProxy>(boGO.Id))
+                                    {
+                                        StreamingProxySystem.get().getProxy<BuildableObjectProxy>(boGO.Id).setColor(color_r, color_g, color_b);
+                                    }
                                 }
+                                else
+                                {
+                                    var trainVehicleGO = hasColorManager as TrainTopGO;
+                                    if (trainVehicleGO != null)
+                                    {
+                                        var lsEvent = new ColorizeObjectEvent(__instance.relatedCharacter.usernameHash, trainVehicleGO.parentTrainVehicle.id, color_r, color_g, color_b, isReset, true);
+                                        GameRoot.addLockstepEvent(lsEvent);
+                                        hasColorManager.ColorManager.updateColor(null, new Color(color_r / 255f, (byte)color_g / 255f, (byte)color_b / 255f));
+                                    }
+                                    else
+                                    {
+                                        C3.Dbg.LogError($"Unhandled IHasColorManager component.");
+                                    }
+                                }
+
+                                // play client side sfx
+                                lastPlayedAudioClipIdx.SetValue(__instance, (int)lastPlayedAudioClipIdx.GetValue(__instance) + 1);
+                                lastPlayedAudioClipIdx.SetValue(__instance, (int)lastPlayedAudioClipIdx.GetValue(__instance) % ResourceDB.resourceLinker.audioClip_paintingStrokes.Length);
+                                if (!__instance.audioSource_painting.isPlaying)
+                                    __instance.audioSource_painting.PlayOneShot(ResourceDB.resourceLinker.audioClip_paintingStrokes[(int)lastPlayedAudioClipIdx.GetValue(__instance)]);
+
+                                // set cache
+                                lastColorizedObject.SetValue(__instance, hasColorManager);
+                                lastColorizedObject_isReset.SetValue(__instance, isReset);
+                                lastColorizationTime.SetValue(__instance, Time.realtimeSinceStartup);
                             }
                         }
                     }
                 }
-                if (lookingAtBuilding)
+
+                if (hasAnyTarget == true)
                 {
-                    if (lookingAtColorizableBuilding)
+                    if (hasValidTarget == true)
+                        // LOC: Color Tool > Info Text > Valid Target, keep the line break (0/1/2/3 = keybinds, f.i. "LMB" (for left mouse button), or "Alt+LMB")
                         GameRoot.setInfoText(
-                            string.Format("{0} to colorize. {1} to select color.\n{2}+{3} to reset object to default color.\nHold {4} to use bulk paint mode.",
-                            GameRoot.getHotkeyStringFromAction("Action"),
-                            GameRoot.getHotkeyStringFromAction("Alternate Action"),
-                            GameRoot.getHotkeyStringFromAction("Modifier 2"),
-                            GameRoot.getHotkeyStringFromAction("Action"),
-                            GameRoot.getHotkeyStringFromAction("Modifier 1")));
+                            PoMgr._po("COLOR_TOOL_INFO_VALID", "{0} to colorize. {1} to select color.\n{2}+{3} to reset object to default color.", GameRoot.getHotkeyStringFromAction("Action"), GameRoot.getHotkeyStringFromAction("Alternate Action"), GameRoot.getHotkeyStringFromAction("Modifier 2"), GameRoot.getHotkeyStringFromAction("Action"))
+                            + $"\nHold {GameRoot.getHotkeyStringFromAction("Modifier 1")} to use bulk paint mode."
+                            );
                     else
+                        // LOC: Color Tool > Info Text > Invalid Target
                         GameRoot.setInfoText(PoMgr._po("COLOR_TOOL_INFO_INVALID", "Target object cannot be colored."));
                 }
                 else
+                    // LOC: Color Tool > Info Text > No Target
                     GameRoot.setInfoText(PoMgr._po("COLOR_TOOL_INFO_NO_TARGET", "Look at objects to apply color, not every object can be colorized."));
             }
             return false;

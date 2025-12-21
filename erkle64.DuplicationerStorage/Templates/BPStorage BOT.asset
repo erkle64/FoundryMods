@@ -1,0 +1,798 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1035335656, guid: 1c83dc1f03b8cf43812e942694488c9e, type: 3}
+  m_Name: BPStorage BOT
+  m_EditorClassIdentifier: 
+  includeIngame: 1
+  includeInBuild: 1
+  includeInDemo: 1
+  identifier: _erkle64_bpstorage
+  modIdentifier: _base
+  serializedOriginal: "template:\n  type: Storage\n  simulationType: NoSimulation\n 
+    simulationSleepFlags: \"\"\n  simTypeSleep_initial: False\n  isSuperBuilding:
+    False\n  size:\n    x: 2\n    y: 3\n    z: 2\n  validateTerrainTileColliders:
+    True\n  prefabOnDisk: Assets/FoundryAssets/BuildableObjects/Logistic Container
+    1.prefab|4bf07fdf988ccce4c82da6ded2e59919\n  bgoType:\n  dragBuildType: None\n 
+    dragModeOrientationSlope_planeAngle: 45\n  dragModeOrientationSlope_planeAngleQuaternion:\n   
+    x: 0.3826835\n    y: 0\n    z: 0\n    w: 0.9238795\n  dragModeOrientationSlope_yOrientationModifier:
+    0\n  dragModeOrientationSlope_yOffsetPerInstance: 1\n  dragModeOrientationSlope_allowSideways:
+    True\n  dragModeLine_dragAxis: X\n  dragModeLine_dragPlaneMultipler: 1\n  dragModeLine_nonUnlockedYCorrection:
+    0\n  dragModePlane_dragAxis01: X\n  dragModePlane_dragAxis02: Y\n  dragModes:
+    []\n  customSnapMode: None\n  demolitionTimeSec: 1\n  canBeDestroyedByDynamite:
+    True\n  conversionGroup_str: \"\"\n  isVisibleOnMap: True\n  mapColorPriority:
+    50\n  skipForRunningIdxGeneration: False\n  audioClip_customBuildSound: Assets/FoundryAssets/SFX/Locked_Down_Machine_01_cut.wav|557722da1684d5a4a9af196466afa99c\n 
+    hasNameOverride: False\n  nameOverride: \"\"\n  canBeCopiedByTablet: True\n 
+    defaultObjectColor:\n    r: 1\n    g: 1\n    b: 1\n    a: 1\n  analyticsTrackerId:
+    None\n  hasToBeOnFoundation: False\n  floorShouldOutlineBuilding: True\n  foundationConnection:
+    yNeg\n  loaderLevel: 0\n  disableLoaders: False\n  blockedLoaderPositions: []\n 
+    rotationAllowed: True\n  canBeRotatedAroundXAxis: False\n  additionalAABBs_input:
+    []\n  hasToBeOnLava: False\n  useNativeTileColliders: True\n  isModularBuilding:
+    False\n  modularBuildingType: Module\n  modularBuildingModule_descriptionName:
+    \"\"\n  modularBuildingModule_amountItemCost: 1\n  modularBuildingModule_unlockedByResearchTemplateIdentifier:
+    \"\"\n  modularBuildingConnectionNodes: []\n  modularBuildingLimits: []\n  modularBuilding_forceRequirePCM:
+    False\n  modularBuildingLocalSearchAnchor:\n    x: 0\n    y: 0\n    z: 0\n  modularBuildingItemCost:
+    []\n  modularBuildingRubble: []\n  modularBuilding_hasNoEnabledState: False\n 
+    powerComponentType: NONE\n  powerSubType: GENERIC\n  energyConsumptionKW_str:
+    \"\"\n  powerProducer_drawPriority: 0\n  spp_showToggleButton: True\n  spp_showPowerButton:
+    False\n  spp_disablePowerCheck: False\n  spp_disableGridCheck: False\n  spp_gridCheckType:
+    LowVoltage\n  hasEnergyGridConnection: False\n  hasPoleGridConnection: False\n 
+    poleGrid_connectionRange: 0\n  poleGrid_connectorOffset:\n    x: 0\n    y: 0\n   
+    z: 0\n  poleGrid_maxConnections: 5\n  poleGrid_reservedConnections: 0\n  poleGridType:
+    \"\"\n  poleGridConnectionMatrix: \"\"\n  hasFuelManagerSolid: False\n  hasFuelManagerElemental:
+    False\n  fme_fuelFlags: \"\"\n  fme_lockedElementTemplateIdentifier: \"\"\n 
+    hasLightSource: False\n  lightEmitters: []\n  spawnFlyingDebrisWhenExploding:
+    True\n  debrisWithExplosionForcePrefab: Assets/Resources/div/DebrisWithExplosionForce
+    (Medium).prefab|f549ccdd163879849a6f5bd55f4b5007\n  itemBufferSlotMap: []\n 
+    hasRailings: False\n  walkway_mesh_noRailings:\n    mesh:\n    orientation: 0\n 
+    walkway_mesh_xPos:\n    mesh:\n    orientation: 0\n  walkway_mesh_xNeg:\n   
+    mesh:\n    orientation: 0\n  walkway_mesh_zPos:\n    mesh:\n    orientation:
+    0\n  walkway_mesh_zNeg:\n    mesh:\n    orientation: 0\n  walkway_mesh_xPos_xNeg:\n   
+    mesh:\n    orientation: 0\n  walkway_mesh_z_Pos_zNeg:\n    mesh:\n    orientation:
+    0\n  walkway_mesh_xPos_zPos:\n    mesh:\n    orientation: 0\n  walkway_mesh_xPos_zNeg:\n   
+    mesh:\n    orientation: 0\n  walkway_mesh_xNeg_zPos:\n    mesh:\n    orientation:
+    0\n  walkway_mesh_xNeg_zNeg:\n    mesh:\n    orientation: 0\n  walkway_mesh_xPos_zNeg_xNeg:\n   
+    mesh:\n    orientation: 0\n  walkway_mesh_zPos_xPos_zNeg:\n    mesh:\n    orientation:
+    0\n  walkway_mesh_xPos_zPos_xNeg:\n    mesh:\n    orientation: 0\n  walkway_mesh_zPos_xNeg_zNeg:\n   
+    mesh:\n    orientation: 0\n  walkway_mesh_allRailings:\n    mesh:\n    orientation:
+    0\n  hasIntraBuildingWalkways: False\n  intraBuildingWalkwayData: []\n  hasAdjacentWalkwayOverrides:
+    False\n  adjacentWalkwayOverridesPos: []\n  hasConveyorConnectionManager: False\n 
+    ccm_connectionData: []\n  hasAssemblyLineConnectionManager: False\n  alcm_connectionData:
+    []\n  hasStrutManager: False\n  sm_strutPillars: []\n  sm_strutPillarBotIdentifier:
+    \"\"\n  hasDataSystemManager: True\n  dsm_connections:\n    - localOffset:\n       
+    x: 0\n        y: 2\n        z: 0\n      connectorFlag: yPos\n  hasFluidBoxManager:
+    False\n  fbm_sendUpdateEventsForRegularFluidBoxes: False\n  fbm_fluidBoxes: []\n 
+    fbm_ioFluidBoxes: []\n  droneMiner_oreSearchRadius: 0\n  droneMiner_itemCapacityPerDrone:
+    0\n  droneMiner_miningSpeed_str: \"\"\n  droneMiner_droneCharge_str: \"\"\n 
+    droneMiner_droneCount: 0\n  droneMiner_dockPositionInside:\n    x: 0\n    y:
+    0\n    z: 0\n  droneMiner_dockPositionOutside:\n    x: 0\n    y: 0\n    z: 0\n 
+    droneMiner_list_localBlocksAllowedToBeTraversed: []\n  dissolver_elementalConsumptionPerSecond_str:
+    \"\"\n  dissolver_solidsPerSecond_str: \"\"\n  dissolver_isElemental: False\n 
+    droneTransport_isStartStation: False\n  droneTransport_energyConsumptionPerSecondFlightTime_kj_str:
+    \"\"\n  droneTransport_energyRechargeRatePerSecond_kj_str: \"\"\n  droneTransport_travelSpeed_mPerSec:
+    0\n  droneTransport_rotationSpeedDegreePerSec: 0\n  droneTransport_droneYOffset:
+    0\n  droneTransport_type: 0\n  loader_localBeltOffset:\n    x: 0\n    y: 0\n   
+    z: 0\n  loader_ticksPerAction: 0\n  loader_idlePowerConsumption_kjPerS_str: \"\"\n 
+    loader_isFilter: False\n  pipeLoader_maxThroughputPerTickInLiter_str: \"\"\n 
+    pipeLoader_idlePowerConsumption_kjPerS_str: \"\"\n  pipeLoader_allowedPipeGroupIdentifiers:
+    []\n  pipeLoader_fluidBoxPositionOrigin_localOffset:\n    x: 0\n    y: 0\n   
+    z: 0\n  pipeLoader_fluidBoxPositionTarget_localOffset:\n    x: 0\n    y: 0\n   
+    z: 0\n  pipeLoader_buildingPosition_localOffset:\n    x: 0\n    y: 0\n    z:
+    0\n  storage_slotSize: 8\n  producerRecipeType: Tags\n  producer_recipeTimeModifier_str:
+    \"\"\n  producer_recipeType_fixed: \"\"\n  producer_recipeType_tags: []\n  autoProducer_recipeTimeModifier_str:
+    \"\"\n  autoProducer_recipeType_tag: \"\"\n  conveyor_isSlope: False\n  conveyor_slopePartner_str:
+    \"\"\n  conveyor_speed_slotsPerTick: 1\n  conveyor_mesh_straight:\n  conveyor_mesh_curve_left:\n 
+    conveyor_mesh_curve_right:\n  conveyor_mesh_slope_up:\n  conveyor_mesh_slope_down:\n 
+    buildingPart_hasSideTextures: False\n  buildingPart_hasBottomTextures: False\n 
+    battery_capacityKJ_str: \"\"\n  shippingPad_cargoCapacity_weightInKg_str: \"\"\n 
+    shippingPad_padSize: Small\n  shippingPad_renderedCratePrefab:\n  shippingPad_crateRenderingStartPos:\n   
+    x: 0\n    y: 0\n    z: 0\n  shippingPad_crateRenderingEndPos:\n    x: 0\n   
+    y: 0\n    z: 0\n  shippingPad_shipLandingPosOffset_fpm:\n    x: 0\n    y: 0\n   
+    z: 0\n  shippingPad_shipRotationModifierDegrees: 0\n  shippingPad_cargoTower_cargoPrefab:\n 
+    shippingPad_cargoTower_positions: []\n  shippingPad_cargoTower_maxCargoPrefabs:
+    4\n  shippingPad_cargoTower_cargoPrefabHeight: 1\n  shippingPad_cargoTower_cargoMovementSpeed:
+    1\n  shippingPad_spp_preventDownShipping: False\n  pipe_hasVisualUpdate: False\n 
+    pipe_visualUpdateFluidBoxTemplateIdx: 0\n  transformer_transmissionRate_kjPerS_str:
+    \"\"\n  lvgGenerator_transmissionRate_kjPerS_str: \"\"\n  lvgGenerator_lockedItemTemplate_identifier:
+    \"\"\n  lvgGenerator_efficiency_str: \"\"\n  solarPanel_outputMax_str: \"\"\n 
+    solarPanel_outputMin_str: \"\"\n  solarPanel_rotatingPart: False\n  worldDecor_miningYield:\n   
+    - it_identifier: \"\"\n      amount: 0\n  worldDecor_miningTimeSec: 2\n  worldDecor_isDebris:
+    False\n  worldDecor_specialDrops: []\n  worldDecor_scratchColor:\n    r: 1\n   
+    g: 1\n    b: 1\n    a: 1\n  worldDecor_canGrow: False\n  worldDecor_checkForStalagmiteCeilingFixup:
+    False\n  worldDecor_growTimeSec: 1800\n  worldDecor_growStartScale: 0.1\n  worldDecor_plantSeedIdentifier:
+    \"\"\n  worldDecor_allowedGrowableTerrainBlocks: []\n  worldDecor_anchorType:
+    0\n  superBuilding_levels: []\n  superBuilding_researchUnlocks_str: []\n  superBuilding_allowedLoaderPositions:
+    []\n  superBuilding_loaderIndicator_rotY: 0\n  superBuilding_refundOnDemolish:
+    False\n  researchLab_sciencePack_str: \"\"\n  researchEntity_scienceItems: []\n 
+    researchEntity_scienceItemsVisibilityResearch: []\n  researchEntity_powerDemand_kjPerSecond_data:
+    \"\"\n  pumpjack_amountPerSec_str: \"\"\n  pumpjack_drillOffset:\n    x: 0\n   
+    y: 0\n    z: 0\n  pumpjack_maxDrillDepth: 0\n  burnerGenerator_powerGenertaionRate_kjPerS_str:
+    \"\"\n  burnerGenerator_efficiency_str: \"\"\n  terrainBlock_tbtIdentifier: \"\"\n 
+    minecartDepot_connectionPoint:\n    x: 0\n    y: 0\n    z: 0\n  minecartDepot_connectionSearchDirection:
+    xPos\n  minecartDepot_miningInventorySlots: 0\n  minecartDepot_cartInterval_sec:
+    0\n  minecartDepot_autobuildTrackTemplate_str: \"\"\n  minecartTracks_connectionPoints:\n   
+    - x: 0\n      y: 0\n      z: 0\n    - x: 0\n      y: 0\n      z: 0\n  minecartTracks_connectionSearchDirection:\n   
+    - xPos\n    - xPos\n  minecartTracks_slotLength: 0\n  freightElevator_middlePartGOH1_prototype:\n 
+    freightElevator_middlePartGOH2_prototype:\n  freightContainer_speedPerTick: 0\n 
+    freightElevator_tierID: 0\n  elevatorStation_structureBOT_str: \"\"\n  door_secondsToOpen:
+    1\n  blastFurnace_speedModifier: \"\"\n  blastFurnace_outputMultiplier: \"\"\n 
+    blastFurnace_optimalRunningTemp: \"\"\n  blastFurnace_minRunningTemp: \"\"\n 
+    blastFurnace_hotAirTemplateIdentifier: \"\"\n  blastFurnace_shutdownTimer_base_sec:
+    0\n  blastFurnace_shutdownTimer_temp_sec: 0\n  blastFurnace_towerModule_capacity:
+    \"\"\n  blastFurnace_towerModule_speedIncrease: \"\"\n  blastFurnace_towerModuleBotIdentifier:
+    \"\"\n  blastFurnace_gasExhaustDrainModuleBotIdentifier: \"\"\n  blastFurnace_towerModule_hotAirConsumptionPercentIncrease:
+    \"\"\n  blastFurnace_baseHotAirConsumptionPerTick: \"\"\n  blastFurnace_maxHeatLossPerTick:
+    \"\"\n  blastFurnace_heatGainPerTick: \"\"\n  blastFurnace_speedPercentageAtMinRunningTemp:
+    \"\"\n  resourceConverter_powerConsumption_kjPerSec: \"\"\n  resourceConverter_input_elemental:
+    []\n  resourceConverter_output_elemental: []\n  resourceConverter_speedBonusModules:
+    []\n  resourceConverter_hasAdjacencyBonus: False\n  resourceConverter_powerDecreasePerAdjacentResourceConverter:
+    \"\"\n  resourceConverter_adjacencyBonusAxis: 0\n  frackingTower_drillOffset:\n   
+    x: 0\n    y: 0\n    z: 0\n  frackingTower_maxDrillLength: 0\n  frackingTower_powerConsumptionPercentagePerOptionalTowerModule:
+    0\n  frackingTower_fluidThroughputPerTowerPerSecond_str: \"\"\n  frackingTower_towerModuleBOT_identifier:
+    \"\"\n  modularFluidTank_baseFluidCapacity_str: \"\"\n  modularFluidTank_towerModuleBOT_identifier:
+    \"\"\n  modularFluidTank_topModuleBOT_identifier: \"\"\n  modularFluidTank_fluidCapacityPerTower_str:
+    \"\"\n  trainLoadingStation_itemType: 0\n  trainTrackLinkable_trackSearchOffset01:\n   
+    x: 0\n    y: 0\n    z: 0\n  trainTrackLinkable_trackSearchOffset02:\n    x: 0\n   
+    y: 0\n    z: 0\n  trainTrackLinkable_compatibleTrackTemplates: []\n  al_start_slotWidth:
+    0\n  al_start_speedInSlotsPerTick: 0\n  al_start_localOffset_outputOrigin:\n   
+    x: 0\n    y: 0\n    z: 0\n  al_start_localOffset_outputTarget:\n    x: 0\n   
+    y: 0\n    z: 0\n  alStart_requiredPowerPerAction_kj_str: \"\"\n  al_start_splineDataContainer:\n 
+    al_rail_slotWidth: 0\n  al_rail_speedInSlotsPerTick: 0\n  al_rail_localOffset_inputOrigin:\n   
+    x: 0\n    y: 0\n    z: 0\n  al_rail_localOffset_inputTarget:\n    x: 0\n    y:
+    0\n    z: 0\n  al_rail_localOffset_outputOrigin:\n    x: 0\n    y: 0\n    z:
+    0\n  al_rail_localOffset_outputTarget:\n    x: 0\n    y: 0\n    z: 0\n  al_rail_splineDataContainer:\n 
+    al_rail_csm_outputOrientationModifier: 0\n  al_producer_machineType: Producer\n 
+    al_producer_slotWidth_input: 0\n  al_producer_slotWidth_output: 0\n  al_producer_speedInSlotsPerTick:
+    0\n  al_producer_localOffset_inputOrigin:\n    x: 0\n    y: 0\n    z: 0\n  al_producer_localOffset_inputTarget:\n   
+    x: 0\n    y: 0\n    z: 0\n  al_producer_localOffset_outputOrigin:\n    x: 0\n   
+    y: 0\n    z: 0\n  al_producer_localOffset_outputTarget:\n    x: 0\n    y: 0\n   
+    z: 0\n  al_producer_splineDataContainer_input:\n  al_producer_splineDataContainer_output:\n 
+    al_endConsumer_itemCapacity: 0\n  al_endConsumer_interactionPoints: []\n  al_endConsumer_slotWidth:
+    0\n  al_endConsumer_speedInSlotsPerTick: 0\n  al_endConsumer_localOffset_inputOrigin:\n   
+    x: 0\n    y: 0\n    z: 0\n  al_endConsumer_localOffset_inputTarget:\n    x: 0\n   
+    y: 0\n    z: 0\n  al_endConsumer_splineDataContainer:\n  al_merger_speedInSlotsPerTick:
+    0\n  al_merger_slotWidth_input01: 0\n  al_merger_slotWidth_input02: 0\n  al_merger_slotWidth_input03:
+    0\n  al_merger_slotWidth_input01_internal: 0\n  al_merger_slotWidth_input02_internal:
+    0\n  al_merger_slotWidth_input03_internal: 0\n  al_merger_slotWidth_output: 0\n 
+    al_merger_localOffset_inputOrigin01:\n    x: 0\n    y: 0\n    z: 0\n  al_merger_localOffset_inputTarget01:\n   
+    x: 0\n    y: 0\n    z: 0\n  al_merger_localOffset_inputOrigin02:\n    x: 0\n   
+    y: 0\n    z: 0\n  al_merger_localOffset_inputTarget02:\n    x: 0\n    y: 0\n   
+    z: 0\n  al_merger_localOffset_inputOrigin03:\n    x: 0\n    y: 0\n    z: 0\n 
+    al_merger_localOffset_inputTarget03:\n    x: 0\n    y: 0\n    z: 0\n  al_merger_localOffset_outputOrigin:\n   
+    x: 0\n    y: 0\n    z: 0\n  al_merger_localOffset_outputTarget:\n    x: 0\n   
+    y: 0\n    z: 0\n  al_merger_splineDataContainer_input01:\n  al_merger_splineDataContainer_input02:\n 
+    al_merger_splineDataContainer_input03:\n  al_merger_splineDataContainer_input01_internal:\n 
+    al_merger_splineDataContainer_input02_internal:\n  al_merger_splineDataContainer_input03_internal:\n 
+    al_merger_splineDataContainer_output:\n  al_splitter_speedInSlotsPerTick: 0\n 
+    al_splitter_slotWidth_output01: 0\n  al_splitter_slotWidth_output02: 0\n  al_splitter_slotWidth_output03:
+    0\n  al_splitter_slotWidth_input: 0\n  al_splitter_localOffset_outputOrigin01:\n   
+    x: 0\n    y: 0\n    z: 0\n  al_splitter_localOffset_outputTarget01:\n    x: 0\n   
+    y: 0\n    z: 0\n  al_splitter_localOffset_outputOrigin02:\n    x: 0\n    y: 0\n   
+    z: 0\n  al_splitter_localOffset_outputTarget02:\n    x: 0\n    y: 0\n    z: 0\n 
+    al_splitter_localOffset_outputOrigin03:\n    x: 0\n    y: 0\n    z: 0\n  al_splitter_localOffset_outputTarget03:\n   
+    x: 0\n    y: 0\n    z: 0\n  al_splitter_localOffset_inputOrigin:\n    x: 0\n   
+    y: 0\n    z: 0\n  al_splitter_localOffset_inputTarget:\n    x: 0\n    y: 0\n   
+    z: 0\n  al_splitter_splineDataContainer_output01:\n  al_splitter_splineDataContainer_output02:\n 
+    al_splitter_splineDataContainer_output03:\n  al_splitter_splineDataContainer_input:\n 
+    escalator_localForwardDirection: []\n  escalator_type: Straight\n  escalator_tier:
+    0\n  escalator_botGroup_straight: \"\"\n  escalator_botGroup_slopeDown: \"\"\n 
+    escalator_botGroup_slopeUp: \"\"\n  escalator_botGroup_curveLeft: \"\"\n  escalator_botGroup_curveRight:
+    \"\"\n  escalator_connectionForward_localOffset_origin:\n    x: 0\n    y: 0\n   
+    z: 0\n  escalator_connectionForward_localOffset_target:\n    x: 0\n    y: 0\n   
+    z: 0\n  escalator_connectionBackward_localOffset_origin:\n    x: 0\n    y: 0\n   
+    z: 0\n  escalator_connectionBackward_localOffset_target:\n    x: 0\n    y: 0\n   
+    z: 0\n  baseStation_craftingRecipeIdentifier: []\n  oreVeinMiner_railMinerSlotLength:
+    0\n  oreVeinMiner_railMinerDrillSlotPadding: 0\n  oreVeinMiner_railMinerMoveSpeedSlotsPerTick:
+    0\n  oreVeinMiner_ticksPerOre_str: \"\"\n  oreVeinMiner_minecartInventorySlotSize:
+    0\n  oreVeinMiner_minecartMoveSpeedSlotsPerTick: 0\n  oreVeinMiner_minecartSpawnOffset_toDepot:
+    0\n  oreVeinMiner_minecartSpawnOffset_toMiner: 0\n  oreVeinMiner_minecartDespawnDeadzone_toDepot:
+    0\n  oreVeinMiner_minecartDespawnDeadzone_toMiner: 0\n  oreVeinMiner_minecartRenderingOffsetToDepot:
+    0\n  oreVeinMiner_minecartRenderingOffsetToMiner: 0\n  oreVeinMiner_powerConsumptionBase_kjPerSec:
+    0\n  oreVeinMiner_powerConsumptionMining_kjPerSec: 0\n  boiler_elementTemplateIdentifier_source:
+    \"\"\n  boiler_elementTemplateIdentifier_output: \"\"\n  boiler_consumptionPerSecond_str:
+    \"\"\n  boiler_outputPerSecond_str: \"\"\n  boiler_energyConsumption_kjPerS_str:
+    \"\"\n  constructionDronePort_itemContributionPerSecond_str: \"\"\n  constructionDronePort_droneYOffset:
+    0\n  constructionDronePort_droneTravelHeight: 0\n  constructionDronePort_droneTravelSpeed_mPerS:
+    0\n  constructionDronePort_droneTravelRotation_degPerS: 0\n  constructionDronePort_energyBuffer_kj_str:
+    \"\"\n  constructionDronePort_energyConsumptionPerItem_kj_str: \"\"\n  constructionDronePort_energyRechargeRate_kjPerS_str:
+    \"\"\n  transportDronePort_dronePositions: []\n  transportDronePort_droneInventoryCapacity:
+    0\n  transportDronePort_droneTravelHeight: 0\n  transportDronePort_droneTravelSpeed_mPerS:
+    0\n  transportDronePort_droneTravelRotation_degPerS: 0\n  archiveCenter_spawnPointoffset:\n   
+    x: 0\n    y: 0\n    z: 0\n  archiveCenter_spawnPointOrientation: xPos\n  constructionWarehouse_interactionPoints:
+    []\n  constructionWarehouse_recyclingSpeedItemsPerSecond: 0\n  constructionWarehouse_powerDemandRecycling_kjPerS_str:
+    \"\"\n  greenhouse_arrayInputs: []\n  greenhouse_doubleOutputPercentChance: 0\n 
+    greenhouse_craftingTimeMs: 0\n  salesItemWarehouse_interactionPoints: []\n  salesItemWarehouse_itemCapacity:
+    0\n  salesCurrencyWarehouse_interactionPoints: []\n  salesCurrencyWarehouse_itemCapacity:
+    0\n  emergencyBeacon_yieldItemTemplateIdentifier: \"\"\n  buddyKennel_critterTemplateIdentifier:
+    \"\"\n  buddyKennel_critterPos_localOffset:\n    x: 0\n    y: 0\n    z: 0\n 
+    scanningEntity_scanRange: 0\n  scanningEntity_secondsPerChunk: 0\n  scanningEntity_scanRangeAddPerModule:
+    0\n  scanningEntity_additionalScanSpeedPercentagePerModule: 0\n  scanningEntity_speedModuleIdentifier:
+    \"\"\n  scanningEntity_distanceModuleIdentifier: \"\"\n  scanningEntity_additionalPowerConsumptionPercentagePerOptionalModule:
+    0\n  dataCableEntity_variants: []\n  dataSourceEntity_signalSlots: 5\n  dataSourceEntity_mode:
+    0\n  nppReactor_arrayInputs:\n  nppReactor_coolingLiquid_identifier:\n  nppReactor_baseCoolingLiquidDemandPerTick:
+    0\n  nppReactor_additionalCoolingLiquidDemandPerTick: 0\n  nppReactor_optionalCoolingLiquid_identifier:\n 
+    nppReactor_output_elementalTemplate_identifier:\n  nppReactor_outputPerTick:
+    0\n  nppReactor_nominalTemperature: 0\n  nppReactor_targetTemperature: 0\n  nppReactor_criticalTemperature:
+    0\n  nppReactor_catastrophicTemperature: 0\n  nppReactor_cooldownTemperature:
+    0\n  nppReactor_heatGainPerTick: 0\n  nppReactor_heatLossPerTick: 0\n  nppReactor_emergencyVentBoTIdentifier:\n 
+    nppReactor_controlRodsMovePercentagePerTick: 0\n  nppSteamGenerator_reactorLoop_input_identifier:\n 
+    nppSteamGenerator_reactorLoop_output_identifier:\n  nppSteamGenerator_coolingLoop_input_identifier:\n 
+    nppSteamGenerator_coolingLoop_output_identifier:\n  nppSteamGenerator_conversionRate_reactorInputToCoolInput:
+    0\n  nppSteamGenerator_conversionRate_reactorInputToReactorOutput: 0\n  nppSteamGenerator_conversionRate_reactorInputToCoolingOutput:
+    0\n  nppSteamGenerator_maxInputPertick: 0\n  nppSteamTurbine_input_identifier:\n 
+    nppSteamTurbine_maxInputAmountPerTick: 0\n  nppSteamTurbine_output_identifier:\n 
+    nppSteamTurbine_inputToOutputConversionRate: 0\n  nppSteamTurbine_powerGenertaionRate_kjPerSec:
+    0\n  nppSteamTurbine_efficiency: 0\n  nppCoolingTower_inputTurbine_identifier:\n 
+    nppCoolingTower_inputTurbine_maxInputPerTick: 0\n  nppCoolingTower_inputExtra_identifier:\n 
+    nppCoolingTower_turbineInputToExtraInputConversionRate: 0\n  nppCoolingTower_inputCooling_identifier:\n 
+    nppCoolingTower_turbineInputToCoolingInputConversionRate: 0\n  nppCoolingTower_output_identifier:\n 
+    nppCoolingTower_turbineInputToOutputConversionRate: 0\n  identifier: _base_logistic_container_i\n"
+  type: 3
+  simulationType: 0
+  simulationSleepFlags: 0
+  simTypeSleep_initial: 0
+  isSuperBuilding: 0
+  size: {x: 2, y: 3, z: 2}
+  validateTerrainTileColliders: 1
+  prefabOnDisk: {fileID: 2432392875592095319, guid: 61219845df26fd04b9c22af5cc37097c, type: 3}
+  dragBuildType: 0
+  dragModeOrientationSlope_planeAngle: 45
+  dragModeOrientationSlope_planeAngleQuaternion: {x: 0.38268346, y: 0, z: 0, w: 0.9238795}
+  dragModeOrientationSlope_yOrientationModifier: 0
+  dragModeOrientationSlope_yOffsetPerInstance: 1
+  dragModeOrientationSlope_allowSideways: 1
+  dragModeLine_dragAxis: 0
+  dragModeLine_dragPlaneMultipler: 1
+  dragModeLine_nonUnlockedYCorrection: 0
+  dragModePlane_dragAxis01: 0
+  dragModePlane_dragAxis02: 1
+  dragModes: []
+  customSnapMode: 0
+  demolitionTimeSec: 1
+  canBeDestroyedByDynamite: 1
+  conversionGroup_str: 
+  isVisibleOnMap: 1
+  mapColorPriority: 50
+  skipForRunningIdxGeneration: 0
+  audioClip_customBuildSound: {fileID: 8300000, guid: 557722da1684d5a4a9af196466afa99c, type: 3}
+  hasNameOverride: 0
+  nameOverride: 
+  canBeCopiedByTablet: 1
+  defaultObjectColor: {r: 1, g: 1, b: 1, a: 1}
+  analyticsTrackerId: -1
+  hasToBeOnFoundation: 0
+  floorShouldOutlineBuilding: 1
+  foundationConnection: 3
+  loaderLevel: 0
+  disableLoaders: 0
+  blockedLoaderPositions: []
+  rotationAllowed: 1
+  canBeRotatedAroundXAxis: 0
+  additionalAABBs_input: []
+  hasToBeOnLava: 0
+  useNativeTileColliders: 1
+  isModularBuilding: 0
+  modularBuildingType: 2
+  modularBuildingModule_descriptionName: 
+  modularBuildingModule_amountItemCost: 1
+  modularBuildingModule_unlockedByResearchTemplateIdentifier: 
+  modularBuildingConnectionNodes: []
+  modularBuildingLimits: []
+  modularBuilding_forceRequirePCM: 0
+  modularBuildingLocalSearchAnchor: {x: 0, y: 0, z: 0}
+  modularBuildingItemCost: []
+  modularBuildingRubble: []
+  modularBuilding_hasNoEnabledState: 0
+  powerComponentType: 0
+  powerSubType: -1
+  energyConsumptionKW_str: 
+  powerProducer_drawPriority: 0
+  spp_showToggleButton: 1
+  spp_showPowerButton: 0
+  spp_disablePowerCheck: 0
+  spp_disableGridCheck: 0
+  spp_gridCheckType: 0
+  hasEnergyGridConnection: 0
+  hasPoleGridConnection: 0
+  poleGrid_connectionRange: 0
+  poleGrid_connectorOffset: {x: 0, y: 0, z: 0}
+  poleGrid_maxConnections: 5
+  poleGrid_reservedConnections: 0
+  poleGridType: 0
+  poleGridConnectionMatrix: 0
+  hasFuelManagerSolid: 0
+  hasFuelManagerElemental: 0
+  fme_fuelFlags: 0
+  fme_lockedElementTemplateIdentifier: 
+  hasLightSource: 0
+  lightEmitters: []
+  spawnFlyingDebrisWhenExploding: 1
+  debrisWithExplosionForcePrefab: {fileID: 129258123506043949, guid: f549ccdd163879849a6f5bd55f4b5007, type: 3}
+  itemBufferSlotMap: []
+  hasRailings: 0
+  walkway_mesh_noRailings:
+    mesh: {fileID: 0}
+    orientation: 0
+  walkway_mesh_xPos:
+    mesh: {fileID: 0}
+    orientation: 0
+  walkway_mesh_xNeg:
+    mesh: {fileID: 0}
+    orientation: 0
+  walkway_mesh_zPos:
+    mesh: {fileID: 0}
+    orientation: 0
+  walkway_mesh_zNeg:
+    mesh: {fileID: 0}
+    orientation: 0
+  walkway_mesh_xPos_xNeg:
+    mesh: {fileID: 0}
+    orientation: 0
+  walkway_mesh_z_Pos_zNeg:
+    mesh: {fileID: 0}
+    orientation: 0
+  walkway_mesh_xPos_zPos:
+    mesh: {fileID: 0}
+    orientation: 0
+  walkway_mesh_xPos_zNeg:
+    mesh: {fileID: 0}
+    orientation: 0
+  walkway_mesh_xNeg_zPos:
+    mesh: {fileID: 0}
+    orientation: 0
+  walkway_mesh_xNeg_zNeg:
+    mesh: {fileID: 0}
+    orientation: 0
+  walkway_mesh_xPos_zNeg_xNeg:
+    mesh: {fileID: 0}
+    orientation: 0
+  walkway_mesh_zPos_xPos_zNeg:
+    mesh: {fileID: 0}
+    orientation: 0
+  walkway_mesh_xPos_zPos_xNeg:
+    mesh: {fileID: 0}
+    orientation: 0
+  walkway_mesh_zPos_xNeg_zNeg:
+    mesh: {fileID: 0}
+    orientation: 0
+  walkway_mesh_allRailings:
+    mesh: {fileID: 0}
+    orientation: 0
+  hasIntraBuildingWalkways: 0
+  intraBuildingWalkwayData: []
+  hasAdjacentWalkwayOverrides: 0
+  adjacentWalkwayOverridesPos: []
+  hasConveyorConnectionManager: 0
+  ccm_connectionData: []
+  hasAssemblyLineConnectionManager: 0
+  alcm_connectionData: []
+  hasStrutManager: 0
+  sm_strutPillars: []
+  sm_strutPillarBotIdentifier: 
+  hasDataSystemManager: 1
+  dsm_connections:
+  - localOffset: {x: 0, y: 2, z: 0}
+    connectorFlag: 4
+  hasFluidBoxManager: 0
+  fbm_sendUpdateEventsForRegularFluidBoxes: 0
+  fbm_fluidBoxes: []
+  fbm_ioFluidBoxes: []
+  droneMiner_oreSearchRadius: 0
+  droneMiner_itemCapacityPerDrone: 0
+  droneMiner_miningSpeed_str: 
+  droneMiner_droneCharge_str: 
+  droneMiner_droneCount: 0
+  droneMiner_dockPositionInside: {x: 0, y: 0, z: 0}
+  droneMiner_dockPositionOutside: {x: 0, y: 0, z: 0}
+  droneMiner_audioClip_droneHover: {fileID: 0}
+  droneMiner_audioClip_droneMining: {fileID: 0}
+  droneMiner_dronePrefab: {fileID: 0}
+  droneMiner_list_localBlocksAllowedToBeTraversed: []
+  dissolver_elementalConsumptionPerSecond_str: 
+  dissolver_solidsPerSecond_str: 
+  dissolver_isElemental: 0
+  droneTransport_isStartStation: 0
+  droneTransport_energyConsumptionPerSecondFlightTime_kj_str: 
+  droneTransport_energyRechargeRatePerSecond_kj_str: 
+  droneTransport_travelSpeed_mPerSec: 0
+  droneTransport_rotationSpeedDegreePerSec: 0
+  droneTransport_dronePrefab: {fileID: 0}
+  droneTransport_droneYOffset: 0
+  droneTransport_type: 0
+  loader_localBeltOffset: {x: 0, y: 0, z: 0}
+  loader_ticksPerAction: 0
+  loader_idlePowerConsumption_kjPerS_str: 
+  loader_meshDefault: {fileID: 0}
+  loader_meshParallel: {fileID: 0}
+  loader_meshStraight: {fileID: 0}
+  loader_material_default_impostor: {fileID: 0}
+  loader_material_default_impostor_orange: {fileID: 0}
+  loader_prefabOutputDummy: {fileID: 0}
+  loader_prefabAutoDummy: {fileID: 0}
+  loader_isFilter: 0
+  pipeLoader_maxThroughputPerTickInLiter_str: 
+  pipeLoader_idlePowerConsumption_kjPerS_str: 
+  pipeLoader_allowedPipeGroupIdentifiers: []
+  pipeLoader_fluidBoxPositionOrigin_localOffset:
+    x: 0
+    y: 0
+    z: 0
+  pipeLoader_fluidBoxPositionTarget_localOffset:
+    x: 0
+    y: 0
+    z: 0
+  pipeLoader_buildingPosition_localOffset:
+    x: 0
+    y: 0
+    z: 0
+  storage_slotSize: 4
+  producerRecipeType: 0
+  producer_recipeTimeModifier_str: 
+  producer_audioClip_active: {fileID: 0}
+  producer_recipeType_fixed: 
+  producer_recipeType_tags: []
+  autoProducer_recipeTimeModifier_str: 
+  autoProducer_audioClip_active: {fileID: 0}
+  autoProducer_recipeType_tag: 
+  producer_audioClip_customItemFinishSound: {fileID: 0}
+  conveyor_isSlope: 0
+  conveyor_slopePartner_str: 
+  conveyor_material: {fileID: 0}
+  conveyor_material_inv: {fileID: 0}
+  conveyor_speed_slotsPerTick: 1
+  conveyor_mesh_straight: {fileID: 0}
+  conveyor_mesh_curve_left: {fileID: 0}
+  conveyor_mesh_curve_right: {fileID: 0}
+  conveyor_mesh_slope_up: {fileID: 0}
+  conveyor_mesh_slope_down: {fileID: 0}
+  buildingPart_texture_albedo: {fileID: 0}
+  buildingPart_hasSideTextures: 0
+  buildingPart_texture_side_albedo: {fileID: 0}
+  buildingPart_hasBottomTextures: 0
+  buildingPart_texture_bottom_albedo: {fileID: 0}
+  voxelMeshCorner: {fileID: 0}
+  battery_capacityKJ_str: 
+  shippingPad_cargoCapacity_weightInKg_str: 
+  shippingPad_padSize: 10
+  shippingPad_renderedCratePrefab: {fileID: 0}
+  shippingPad_crateRenderingStartPos:
+    x: 0
+    y: 0
+    z: 0
+  shippingPad_crateRenderingEndPos:
+    x: 0
+    y: 0
+    z: 0
+  shippingPad_shipLandingPosOffset_fpm:
+    x: 0
+    y: 0
+    z: 0
+  shippingPad_shipRotationModifierDegrees: 0
+  shippingPad_cargoTower_cargoPrefab: {fileID: 0}
+  shippingPad_cargoTower_positions: []
+  shippingPad_cargoTower_maxCargoPrefabs: 4
+  shippingPad_cargoTower_cargoPrefabHeight: 1
+  shippingPad_cargoTower_cargoMovementSpeed: 1
+  shippingPad_spp_preventDownShipping: 0
+  pipe_hasVisualUpdate: 0
+  pipe_visualUpdateFluidBoxTemplateIdx: 0
+  transformer_transmissionRate_kjPerS_str: 
+  transformer_audioClip_active: {fileID: 0}
+  lvgGenerator_transmissionRate_kjPerS_str: 
+  lvgGenerator_lockedItemTemplate_identifier: 
+  lvgGenerator_audioClip_active: {fileID: 0}
+  lvgGenerator_efficiency_str: 
+  solarPanel_outputMax_str: 
+  solarPanel_outputMin_str: 
+  solarPanel_rotatingPart: 0
+  worldDecor_miningYield:
+  - it_identifier: 
+    amount: 0
+  worldDecor_miningTimeSec: 2
+  worldDecor_despawnPrefab: {fileID: 0}
+  worldDecor_drillMaterial: {fileID: 0}
+  worldDecor_audioClip_afterHarvesting: {fileID: 0}
+  worldDecor_isDebris: 0
+  worldDecor_specialDrops: []
+  worldDecor_scratchColor: {r: 1, g: 1, b: 1, a: 1}
+  worldDecor_canGrow: 0
+  worldDecor_checkForStalagmiteCeilingFixup: 0
+  worldDecor_growTimeSec: 1800
+  worldDecor_growStartScale: 0.1
+  worldDecor_plantSeedIdentifier: 
+  worldDecor_allowedGrowableTerrainBlocks: []
+  worldDecor_anchorType: 0
+  superBuilding_levels: []
+  superBuilding_researchUnlocks_str: []
+  superBuilding_allowedLoaderPositions: []
+  superBuilding_loaderIndicator_rotY: 0
+  superBuilding_refundOnDemolish: 0
+  researchLab_sciencePack_str: 
+  researchEntity_scienceItems: []
+  researchEntity_scienceItemsVisibilityResearch: []
+  researchEntity_powerDemand_kjPerSecond_data: 
+  pumpjack_amountPerSec_str: 
+  pumpjack_drillOffset: {x: 0, y: 0, z: 0}
+  pumpjack_maxDrillDepth: 0
+  pumpjack_audioClip_active: {fileID: 0}
+  burnerGenerator_powerGenertaionRate_kjPerS_str: 
+  burnerGenerator_efficiency_str: 
+  mesh_powerPole: {fileID: 0}
+  material_powerPolePreview: {fileID: 0}
+  terrainBlock_tbtIdentifier: 
+  minecartDepot_connectionPoint: {x: 0, y: 0, z: 0}
+  minecartDepot_connectionSearchDirection: 0
+  minecartDepot_miningInventorySlots: 0
+  minecartDepot_railMinerPrefab: {fileID: 0}
+  minecartDepot_cartInterval_sec: 0
+  minecartDepot_autobuildTrackTemplate_str: 
+  minecartTracks_connectionPoints:
+  - {x: 0, y: 0, z: 0}
+  - {x: 0, y: 0, z: 0}
+  minecartTracks_connectionSearchDirection: 0000000000000000
+  minecartTracks_slotLength: 0
+  freightElevator_middlePartGOH1: {fileID: 0}
+  freightElevator_middlePartGOH2: {fileID: 0}
+  freightContainer_speedPerTick: 0
+  freightElevator_tierID: 0
+  elevatorStation_cabinPrefab: {fileID: 0}
+  elevatorStation_structureBOT_str: 
+  elevatorStation_audioClip_cabinMoving: {fileID: 0}
+  elevatorStation_audioClip_doorsOpening: {fileID: 0}
+  elevatorStation_audioClip_doorsClosing: {fileID: 0}
+  elevatorStation_audioClip_bell: {fileID: 0}
+  elevatorStation_closeOffGO_top: {fileID: 0}
+  elevatorStation_closeOffGO_bottom: {fileID: 0}
+  door_secondsToOpen: 1
+  door_audioClip_openClose_trigger: {fileID: 0}
+  door_audioClip_openClose_loop: {fileID: 0}
+  geologicalScanner_audioClip_active: {fileID: 0}
+  blastFurnace_speedModifier: 
+  blastFurnace_outputMultiplier: 
+  blastFurnace_optimalRunningTemp: 
+  blastFurnace_minRunningTemp: 
+  blastFurnace_hotAirTemplateIdentifier: 
+  blastFurnace_shutdownTimer_base_sec: 0
+  blastFurnace_shutdownTimer_temp_sec: 0
+  blastFurnace_towerModule_capacity: 
+  blastFurnace_towerModule_speedIncrease: 
+  blastFurnace_towerModuleBotIdentifier: 
+  blastFurnace_gasExhaustDrainModuleBotIdentifier: 
+  blastFurnace_towerModule_hotAirConsumptionPercentIncrease: 
+  blastFurnace_baseHotAirConsumptionPerTick: 
+  blastFurnace_maxHeatLossPerTick: 
+  blastFurnace_heatGainPerTick: 
+  blastFurnace_speedPercentageAtMinRunningTemp: 
+  resourceConverter_powerConsumption_kjPerSec: 
+  resourceConverter_input_elemental: []
+  resourceConverter_output_elemental: []
+  resourceConverter_speedBonusModules: []
+  resourceConverter_hasAdjacencyBonus: 0
+  resourceConverter_powerDecreasePerAdjacentResourceConverter: 
+  resourceConverter_adjacencyBonusAxis: 0
+  resourceConverter_audioClip_active: {fileID: 0}
+  frackingTower_drillOffset:
+    x: 0
+    y: 0
+    z: 0
+  frackingTower_maxDrillLength: 0
+  frackingTower_powerConsumptionPercentagePerOptionalTowerModule: 0
+  frackingTower_fluidThroughputPerTowerPerSecond_str: 
+  frackingTower_towerModuleBOT_identifier: 
+  modularFluidTank_baseFluidCapacity_str: 
+  modularFluidTank_towerModuleBOT_identifier: 
+  modularFluidTank_topModuleBOT_identifier: 
+  modularFluidTank_fluidCapacityPerTower_str: 
+  trainLoadingStation_itemType: 0
+  trainTrackLinkable_trackSearchOffset01: {x: 0, y: 0, z: 0}
+  trainTrackLinkable_trackSearchOffset02: {x: 0, y: 0, z: 0}
+  trainTrackLinkable_compatibleTrackTemplates: []
+  al_start_slotWidth: 0
+  al_start_speedInSlotsPerTick: 0
+  al_start_localOffset_outputOrigin: {x: 0, y: 0, z: 0}
+  al_start_localOffset_outputTarget: {x: 0, y: 0, z: 0}
+  alStart_requiredPowerPerAction_kj_str: 
+  al_start_splineDataContainer: {fileID: 0}
+  al_rail_slotWidth: 0
+  al_rail_speedInSlotsPerTick: 0
+  al_rail_localOffset_inputOrigin: {x: 0, y: 0, z: 0}
+  al_rail_localOffset_inputTarget: {x: 0, y: 0, z: 0}
+  al_rail_localOffset_outputOrigin: {x: 0, y: 0, z: 0}
+  al_rail_localOffset_outputTarget: {x: 0, y: 0, z: 0}
+  al_rail_splineDataContainer: {fileID: 0}
+  al_rail_csm_outputOrientationModifier: 0
+  al_producer_machineType: 0
+  al_producer_slotWidth_input: 0
+  al_producer_slotWidth_output: 0
+  al_producer_speedInSlotsPerTick: 0
+  al_producer_localOffset_inputOrigin: {x: 0, y: 0, z: 0}
+  al_producer_localOffset_inputTarget: {x: 0, y: 0, z: 0}
+  al_producer_localOffset_outputOrigin: {x: 0, y: 0, z: 0}
+  al_producer_localOffset_outputTarget: {x: 0, y: 0, z: 0}
+  al_producer_splineDataContainer_input: {fileID: 0}
+  al_producer_splineDataContainer_output: {fileID: 0}
+  al_endConsumer_itemCapacity: 0
+  al_endConsumer_interactionPoints: []
+  al_endConsumer_slotWidth: 0
+  al_endConsumer_speedInSlotsPerTick: 0
+  al_endConsumer_localOffset_inputOrigin: {x: 0, y: 0, z: 0}
+  al_endConsumer_localOffset_inputTarget: {x: 0, y: 0, z: 0}
+  al_endConsumer_splineDataContainer: {fileID: 0}
+  al_merger_speedInSlotsPerTick: 0
+  al_merger_slotWidth_input01: 0
+  al_merger_slotWidth_input02: 0
+  al_merger_slotWidth_input03: 0
+  al_merger_slotWidth_input01_internal: 0
+  al_merger_slotWidth_input02_internal: 0
+  al_merger_slotWidth_input03_internal: 0
+  al_merger_slotWidth_output: 0
+  al_merger_localOffset_inputOrigin01: {x: 0, y: 0, z: 0}
+  al_merger_localOffset_inputTarget01: {x: 0, y: 0, z: 0}
+  al_merger_localOffset_inputOrigin02: {x: 0, y: 0, z: 0}
+  al_merger_localOffset_inputTarget02: {x: 0, y: 0, z: 0}
+  al_merger_localOffset_inputOrigin03: {x: 0, y: 0, z: 0}
+  al_merger_localOffset_inputTarget03: {x: 0, y: 0, z: 0}
+  al_merger_localOffset_outputOrigin: {x: 0, y: 0, z: 0}
+  al_merger_localOffset_outputTarget: {x: 0, y: 0, z: 0}
+  al_merger_splineDataContainer_input01: {fileID: 0}
+  al_merger_splineDataContainer_input02: {fileID: 0}
+  al_merger_splineDataContainer_input03: {fileID: 0}
+  al_merger_splineDataContainer_input01_internal: {fileID: 0}
+  al_merger_splineDataContainer_input02_internal: {fileID: 0}
+  al_merger_splineDataContainer_input03_internal: {fileID: 0}
+  al_merger_splineDataContainer_output: {fileID: 0}
+  al_splitter_speedInSlotsPerTick: 0
+  al_splitter_slotWidth_output01: 0
+  al_splitter_slotWidth_output02: 0
+  al_splitter_slotWidth_output03: 0
+  al_splitter_slotWidth_input: 0
+  al_splitter_localOffset_outputOrigin01: {x: 0, y: 0, z: 0}
+  al_splitter_localOffset_outputTarget01: {x: 0, y: 0, z: 0}
+  al_splitter_localOffset_outputOrigin02: {x: 0, y: 0, z: 0}
+  al_splitter_localOffset_outputTarget02: {x: 0, y: 0, z: 0}
+  al_splitter_localOffset_outputOrigin03: {x: 0, y: 0, z: 0}
+  al_splitter_localOffset_outputTarget03: {x: 0, y: 0, z: 0}
+  al_splitter_localOffset_inputOrigin: {x: 0, y: 0, z: 0}
+  al_splitter_localOffset_inputTarget: {x: 0, y: 0, z: 0}
+  al_splitter_splineDataContainer_output01: {fileID: 0}
+  al_splitter_splineDataContainer_output02: {fileID: 0}
+  al_splitter_splineDataContainer_output03: {fileID: 0}
+  al_splitter_splineDataContainer_input: {fileID: 0}
+  escalator_localForwardDirection: 
+  escalator_type: 0
+  escalator_tier: 0
+  escalator_botGroup_straight: 
+  escalator_botGroup_slopeDown: 
+  escalator_botGroup_slopeUp: 
+  escalator_botGroup_curveLeft: 
+  escalator_botGroup_curveRight: 
+  escalator_connectionForward_localOffset_origin:
+    x: 0
+    y: 0
+    z: 0
+  escalator_connectionForward_localOffset_target:
+    x: 0
+    y: 0
+    z: 0
+  escalator_connectionBackward_localOffset_origin:
+    x: 0
+    y: 0
+    z: 0
+  escalator_connectionBackward_localOffset_target:
+    x: 0
+    y: 0
+    z: 0
+  baseStation_craftingRecipeIdentifier: []
+  oreVeinMiner_railMinerSlotLength: 0
+  oreVeinMiner_railMinerDrillSlotPadding: 0
+  oreVeinMiner_railMinerMoveSpeedSlotsPerTick: 0
+  oreVeinMiner_ticksPerOre_str: 
+  oreVeinMiner_minecartInventorySlotSize: 0
+  oreVeinMiner_minecartMoveSpeedSlotsPerTick: 0
+  oreVeinMiner_minecartSpawnOffset_toDepot: 0
+  oreVeinMiner_minecartSpawnOffset_toMiner: 0
+  oreVeinMiner_minecartDespawnDeadzone_toDepot: 0
+  oreVeinMiner_minecartDespawnDeadzone_toMiner: 0
+  oreVeinMiner_minecartRenderingOffsetToDepot: 0
+  oreVeinMiner_minecartRenderingOffsetToMiner: 0
+  oreVeinMiner_powerConsumptionBase_kjPerSec: 0
+  oreVeinMiner_powerConsumptionMining_kjPerSec: 0
+  boiler_elementTemplateIdentifier_source: 
+  boiler_elementTemplateIdentifier_output: 
+  boiler_consumptionPerSecond_str: 
+  boiler_outputPerSecond_str: 
+  boiler_energyConsumption_kjPerS_str: 
+  constructionDronePort_itemContributionPerSecond_str: 
+  constructionDronePort_dronePrefab: {fileID: 0}
+  constructionDronePort_droneYOffset: 0
+  constructionDronePort_droneTravelHeight: 0
+  constructionDronePort_droneTravelSpeed_mPerS: 0
+  constructionDronePort_droneTravelRotation_degPerS: 0
+  constructionDronePort_energyBuffer_kj_str: 
+  constructionDronePort_energyConsumptionPerItem_kj_str: 
+  constructionDronePort_energyRechargeRate_kjPerS_str: 
+  transportDronePort_transportDronePrefab: {fileID: 0}
+  transportDronePort_dronePositions: []
+  transportDronePort_droneInventoryCapacity: 0
+  transportDronePort_droneTravelHeight: 0
+  transportDronePort_droneTravelSpeed_mPerS: 0
+  transportDronePort_droneTravelRotation_degPerS: 0
+  archiveCenter_spawnPointoffset:
+    x: 0
+    y: 0
+    z: 0
+  archiveCenter_spawnPointOrientation: 0
+  constructionWarehouse_interactionPoints: []
+  constructionWarehouse_recyclingSpeedItemsPerSecond: 0
+  constructionWarehouse_powerDemandRecycling_kjPerS_str: 
+  greenhouse_arrayInputs: []
+  greenhouse_doubleOutputPercentChance: 0
+  greenhouse_craftingTimeMs: 0
+  salesItemWarehouse_interactionPoints: []
+  salesItemWarehouse_itemCapacity: 0
+  salesCurrencyWarehouse_interactionPoints: []
+  salesCurrencyWarehouse_itemCapacity: 0
+  emergencyBeacon_dropPodPrefab: {fileID: 0}
+  emergencyBeacon_yieldItemTemplateIdentifier: 
+  emergencyBeacon_customDemolitionPrefab: {fileID: 0}
+  buddyKennel_critterTemplateIdentifier: 
+  buddyKennel_critterPos_localOffset:
+    x: 0
+    y: 0
+    z: 0
+  scanningEntity_scanRange: 0
+  scanningEntity_secondsPerChunk: 0
+  scanningEntity_scanRangeAddPerModule: 0
+  scanningEntity_additionalScanSpeedPercentagePerModule: 0
+  scanningEntity_speedModuleIdentifier: 
+  scanningEntity_distanceModuleIdentifier: 
+  scanningEntity_additionalPowerConsumptionPercentagePerOptionalModule: 0
+  dataCableEntity_variants: []
+  dataSourceEntity_signalSlots: 5
+  dataSourceEntity_mode: 0
+  nppReactor_arrayInputs: []
+  nppReactor_coolingLiquid_identifier: 
+  nppReactor_baseCoolingLiquidDemandPerTick: 0
+  nppReactor_additionalCoolingLiquidDemandPerTick: 0
+  nppReactor_optionalCoolingLiquid_identifier: 
+  nppReactor_output_elementalTemplate_identifier: 
+  nppReactor_outputPerTick: 0
+  nppReactor_nominalTemperature: 0
+  nppReactor_targetTemperature: 0
+  nppReactor_criticalTemperature: 0
+  nppReactor_catastrophicTemperature: 0
+  nppReactor_cooldownTemperature: 0
+  nppReactor_heatGainPerTick: 0
+  nppReactor_heatLossPerTick: 0
+  nppReactor_emergencyVentBoTIdentifier: 
+  nppReactor_controlRodsMovePercentagePerTick: 0
+  nppSteamGenerator_reactorLoop_input_identifier: 
+  nppSteamGenerator_reactorLoop_output_identifier: 
+  nppSteamGenerator_coolingLoop_input_identifier: 
+  nppSteamGenerator_coolingLoop_output_identifier: 
+  nppSteamGenerator_conversionRate_reactorInputToCoolInput: 0
+  nppSteamGenerator_conversionRate_reactorInputToReactorOutput: 0
+  nppSteamGenerator_conversionRate_reactorInputToCoolingOutput: 0
+  nppSteamGenerator_maxInputPertick: 0
+  nppSteamTurbine_input_identifier: 
+  nppSteamTurbine_maxInputAmountPerTick: 0
+  nppSteamTurbine_output_identifier: 
+  nppSteamTurbine_inputToOutputConversionRate: 0
+  nppSteamTurbine_powerGenertaionRate_kjPerSec: 0
+  nppSteamTurbine_efficiency: 0
+  nppCoolingTower_inputTurbine_identifier: 
+  nppCoolingTower_inputTurbine_maxInputPerTick: 0
+  nppCoolingTower_inputExtra_identifier: 
+  nppCoolingTower_turbineInputToExtraInputConversionRate: 0
+  nppCoolingTower_inputCooling_identifier: 
+  nppCoolingTower_turbineInputToCoolingInputConversionRate: 0
+  nppCoolingTower_output_identifier: 
+  nppCoolingTower_turbineInputToOutputConversionRate: 0
