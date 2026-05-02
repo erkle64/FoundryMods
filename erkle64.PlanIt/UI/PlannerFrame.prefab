@@ -1805,6 +1805,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c16cbf3b2561c347b5bb34a323fd34f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  focusDefaultObject: {fileID: 0}
+  outlineOnFocus: 1
   uiImage_background: {fileID: 651870159112132373}
   uiContainer_content: {fileID: 4676765200795394867}
   uiContainer_content_padding: {fileID: 7238354760665790311}

@@ -7,5 +7,7 @@ public class DemolishDestroyButtonMode : MonoBehaviour
     [SerializeField] public bool includeBlocks;
     [SerializeField] public bool includeTerrain;
     [SerializeField] public bool includeDecor;
+    [SerializeField] public bool includeTracks;
     [SerializeField] public bool isDestroy;
+    [SerializeField] public bool useDrones;
 }

@@ -220,6 +220,7 @@ namespace Duplicationer
                                     {
                                         bogo
                                     };
+                                var trainTrackIds = new ulong[0];
 
                                 if (!bot.disableLoaders)
                                 {
@@ -251,7 +252,7 @@ namespace Duplicationer
                                         AddLoaderIfNotBlocked(new Vector3Int(bot.size.x, bot.loaderLevel, z), BuildingManager.BuildOrientation.xPos);
                                     }
 
-                                    tool.CopyCustomSelection(position, size, buildings, blocks);
+                                    tool.CopyCustomSelection(position, size, buildings, trainTrackIds, blocks);
                                 }
                             }
                         }

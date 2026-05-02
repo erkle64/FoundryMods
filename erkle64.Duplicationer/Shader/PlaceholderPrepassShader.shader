@@ -12,6 +12,7 @@ Shader "Erkle/PlaceholderPrepassShader"
 
         Blend SrcAlpha OneMinusSrcAlpha
         ColorMask 0
+        Offset -1, -1
 
         CGPROGRAM
         #pragma surface surf Standard fullforwardshadows

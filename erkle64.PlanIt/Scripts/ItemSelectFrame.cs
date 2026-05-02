@@ -1,5 +1,9 @@
 ﻿using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace PlanIt
 {
@@ -8,6 +12,7 @@ namespace PlanIt
         [Header("Item Select Frame")]
         [SerializeField] private IconButton _itemSelectButtonPrefab;
         [SerializeField] private Transform _itemListTransform;
+        [SerializeField] private TMP_InputField _filterInputField;
 
         public delegate void OnConfirmDelegate(ItemElementTemplate result);
         public delegate void OnCancelDelegate();
@@ -15,13 +20,27 @@ namespace PlanIt
         private OnConfirmDelegate _onConfirm;
         private OnCancelDelegate _onCancel;
         private ItemElementTemplate _result = ItemElementTemplate.Empty;
+        private Dictionary<ItemElementTemplate, IconButton> _itemButtons = new();
 
         public bool IsOpen => gameObject.activeSelf;
+
+        bool _selectFilterInputField = true;
+        void Update()
+        {
+            if (_selectFilterInputField == true)
+            {
+                // select input field
+                _filterInputField.gameObject.GetComponent<Selectable>().select_advanced(EventSystem.current);
+                _selectFilterInputField = false;
+            }
+        }
 
         public void Show(OnConfirmDelegate onConfirm, OnCancelDelegate onCancel = null)
         {
             _onConfirm = onConfirm;
             _onCancel = onCancel;
+            _selectFilterInputField = true;
+            _filterInputField.text = string.Empty;
 
             gameObject.SetActive(true);
             AudioManager.playUISoundEffect(ResourceDB.resourceLinker.audioClip_UIOpen);
@@ -77,6 +96,7 @@ namespace PlanIt
                                 _result = itemElement;
                                 Hide(true);
                             };
+                            _itemButtons[itemElement] = itemSelectButton;
                         }
                     }
                 }
@@ -100,7 +120,45 @@ namespace PlanIt
                             _result = itemElement;
                             Hide(true);
                         };
+                        _itemButtons[itemElement] = itemSelectButton;
                     }
+                }
+            }
+        }
+
+        public void OnFilterChanged()
+        {
+            var filter = _filterInputField.text.ToLowerInvariant();
+
+            FilterItems(filter);
+        }
+
+        private void FilterItems(string filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+            {
+                // show all
+                foreach (var kvp in _itemButtons)
+                {
+                    var button = kvp.Value;
+                    button.gameObject.SetActive(true);
+                }
+                return;
+            }
+
+            foreach (var kvp in _itemButtons)
+            {
+                var itemElement = kvp.Key;
+                var button = kvp.Value;
+                if (string.IsNullOrEmpty(filter) ||
+                    itemElement.name.ToLowerInvariant().Contains(filter) ||
+                    itemElement.identifier.ToLowerInvariant().Contains(filter))
+                {
+                    button.gameObject.SetActive(true);
+                }
+                else
+                {
+                    button.gameObject.SetActive(false);
                 }
             }
         }

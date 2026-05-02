@@ -13,7 +13,7 @@ Shader "Erkle/PlaceholderShader"
         Blend SrcAlpha OneMinusSrcAlpha
         ColorMask RGB
         ZWrite Off
-        Offset -1, -1
+        Offset -2, -2
 
         CGPROGRAM
         #pragma surface surf Standard fullforwardshadows alpha

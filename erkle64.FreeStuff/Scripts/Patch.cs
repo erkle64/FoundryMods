@@ -130,6 +130,16 @@ namespace FreeStuff
                             AssetManager.getAsset<ItemTemplate>("_base_rubble_telluxite")
                             );
 
+                        AddCreativeItemRecipe(
+                            AssetManager.getAsset<CraftingRecipe>("_base_crystal_ii"),
+                            AssetManager.getAsset<ItemTemplate>("_base_crystal_i")
+                            );
+
+                        AddCreativeItemRecipe(
+                            AssetManager.getAsset<CraftingRecipe>("_base_power_core_ii"),
+                            AssetManager.getAsset<ItemTemplate>("_base_power_core_i")
+                            );
+
                         var baseElementRecipe = AssetManager.getAsset<CraftingRecipe>("_base_olumic_acid");
                         foreach (var element in ItemTemplateManager.getAllElementTemplates())
                         {
@@ -214,21 +224,21 @@ namespace FreeStuff
 
             #region Creative Chest
             var chestItem = items[ItemTemplate.generateStringHash("_base_logistic_container_i")];
-            var chest = buildings[BuildableObjectTemplate.generateStringHash("_base_logistic_container_i")];
-            var assembler = buildings[BuildableObjectTemplate.generateStringHash("_base_assembler_i")];
+            var chestBOT = buildings[BuildableObjectTemplate.generateStringHash("_base_logistic_container_i")];
+            var assemblerBOT = buildings[BuildableObjectTemplate.generateStringHash("_base_assembler_i")];
 
-            var assemblerGO = assembler.prefabOnDisk.GetComponent<ProducerGO>();
+            var assemblerGO = assemblerBOT.prefabOnDisk.GetComponent<ProducerGO>();
             var assemblerPanel = assemblerGO.ScreenPanelManager.screenPanels[0];
             var assemblerPanelProfile = assemblerGO.ScreenPanelManager.sp_profiles[0];
 
-            var creativeChest = Object.Instantiate(assembler);
+            var creativeChest = Object.Instantiate(assemblerBOT);
             creativeChest.identifier = creativeChestIdentifier;
-            creativeChest.size = new Vector3Int(2, 2, 2);
+            creativeChest.size = new Vector3Int(2, 3, 2);
             creativeChest.energyConsumptionKW_str = "0";
-            creativeChest.producer_audioClip_active = null;
-            creativeChest.producer_audioClip_customItemFinishSound = null;
+            creativeChest.producer_audioEvent_active = null;
+            creativeChest.producer_audioEvent_customItemFinishSound = null;
 
-            var creativeChestPrefab = Object.Instantiate(chest.prefabOnDisk);
+            var creativeChestPrefab = Object.Instantiate(chestBOT.prefabOnDisk);
             Object.DontDestroyOnLoad(creativeChestPrefab);
             creativeChestPrefab.SetActive(false);
             creativeChest.prefabOnDisk = creativeChestPrefab;
@@ -268,19 +278,19 @@ namespace FreeStuff
             #endregion
 
             #region Void Chest
-            var incinerator = buildings[BuildableObjectTemplate.generateStringHash("_base_incinerator")];
+            var incineratorBOT = buildings[BuildableObjectTemplate.generateStringHash("_base_incinerator")];
 
-            var incineratorGO = incinerator.prefabOnDisk.GetComponent<DissolverGO>();
+            var incineratorGO = incineratorBOT.prefabOnDisk.GetComponent<DissolverGO>();
             var incineratorPanel = incineratorGO.ScreenPanelManager.screenPanels[0];
             var incineratorPanelProfile = incineratorGO.ScreenPanelManager.sp_profiles[0];
 
-            var voidChest = Object.Instantiate(incinerator);
+            var voidChest = Object.Instantiate(incineratorBOT);
             voidChest.identifier = voidChestIdentifier;
-            voidChest.size = new Vector3Int(2, 2, 2);
+            voidChest.size = new Vector3Int(2, 3, 2);
             voidChest.energyConsumptionKW_str = "0";
             voidChest.dissolver_solidsPerSecond_str = (60.0f / Config.VoidChest.rate.value).ToString("0.#####", System.Globalization.CultureInfo.InvariantCulture);
 
-            var voidChestPrefab = Object.Instantiate(chest.prefabOnDisk);
+            var voidChestPrefab = Object.Instantiate(chestBOT.prefabOnDisk);
             Object.DontDestroyOnLoad(voidChestPrefab);
             voidChestPrefab.SetActive(false);
             voidChest.prefabOnDisk = voidChestPrefab;
@@ -319,8 +329,7 @@ namespace FreeStuff
 
             voidChestDissolverGO._audioSourceFaderManager = new AudioSourceFaderManager()
             {
-                ac_array = new AudioClip[0],
-                as_array = new AudioSource[0]
+                audioEventBindings =  new AudioSourceFaderManager.AudioEventBinding[0]
             };
 
             var voidChestItem = Object.Instantiate(chestItem);
@@ -334,19 +343,19 @@ namespace FreeStuff
 
             #region Creative Tank
             var tankItem = items[ItemTemplate.generateStringHash("_base_tank_i")];
-            var tank = buildings[BuildableObjectTemplate.generateStringHash("_base_tank_i")];
-            var chemicalProcessor = buildings[BuildableObjectTemplate.generateStringHash("_base_chemical_processor_i")];
+            var tankBOT = buildings[BuildableObjectTemplate.generateStringHash("_base_tank_i")];
+            var chemicalProcessorBOT = buildings[BuildableObjectTemplate.generateStringHash("_base_chemical_processor_i")];
 
-            var chemicalProcessorGO = chemicalProcessor.prefabOnDisk.GetComponent<ProducerWithFBMGO>();
+            var chemicalProcessorGO = chemicalProcessorBOT.prefabOnDisk.GetComponent<ProducerWithFBMGO>();
             var chemicalProcessorPanel = chemicalProcessorGO.ScreenPanelManager.screenPanels[0];
             var chemicalProcessorPanelProfile = chemicalProcessorGO.ScreenPanelManager.sp_profiles[0];
 
-            var creativeTank = Object.Instantiate(chemicalProcessor);
+            var creativeTank = Object.Instantiate(chemicalProcessorBOT);
             creativeTank.identifier = creativeTankIdentifier;
             creativeTank.size = new Vector3Int(7, 4, 3);
             creativeTank.energyConsumptionKW_str = "0";
 
-            var creativeTankPrefab = Object.Instantiate(tank.prefabOnDisk);
+            var creativeTankPrefab = Object.Instantiate(tankBOT.prefabOnDisk);
             Object.DontDestroyOnLoad(creativeTankPrefab);
             creativeTankPrefab.SetActive(false);
             creativeTank.prefabOnDisk = creativeTankPrefab;
@@ -428,19 +437,19 @@ namespace FreeStuff
             #endregion
 
             #region Void Tank
-            var flareStack = buildings[BuildableObjectTemplate.generateStringHash("_base_flare_stack")];
+            var flareStackBOT = buildings[BuildableObjectTemplate.generateStringHash("_base_flare_stack")];
 
-            var flareStackGO = flareStack.prefabOnDisk.GetComponent<DissolverGO>();
+            var flareStackGO = flareStackBOT.prefabOnDisk.GetComponent<DissolverGO>();
             var flareStackPanel = flareStackGO.ScreenPanelManager.screenPanels[0];
             var flareStackPanelProfile = flareStackGO.ScreenPanelManager.sp_profiles[0];
 
-            var voidTank = Object.Instantiate(flareStack);
+            var voidTank = Object.Instantiate(flareStackBOT);
             voidTank.identifier = voidTankIdentifier;
             voidTank.size = new Vector3Int(7, 4, 3);
             voidTank.energyConsumptionKW_str = "0";
             voidTank.dissolver_elementalConsumptionPerSecond_str = (Config.VoidTank.rate.value / 60.0f).ToString(System.Globalization.CultureInfo.InvariantCulture);
 
-            var voidTankPrefab = Object.Instantiate(tank.prefabOnDisk);
+            var voidTankPrefab = Object.Instantiate(tankBOT.prefabOnDisk);
             Object.DontDestroyOnLoad(voidTankPrefab);
             voidTankPrefab.SetActive(false);
             voidTank.prefabOnDisk = voidTankPrefab;
@@ -500,8 +509,7 @@ namespace FreeStuff
 
             voidTankDissolverGO._audioSourceFaderManager = new AudioSourceFaderManager()
             {
-                ac_array = new AudioClip[0],
-                as_array = new AudioSource[0]
+                audioEventBindings = new AudioSourceFaderManager.AudioEventBinding[0]
             };
 
             var voidTankItem = Object.Instantiate(tankItem);

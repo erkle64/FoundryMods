@@ -19,7 +19,7 @@ namespace Duplicationer
         {
         }
 
-        public override string TabletTitle(BlueprintToolCHM tool) => "Place BLueprint - Move Vertical";
+        public override string TabletTitle(BlueprintToolCHM tool) => "Place Blueprint - Move Vertical";
 
         public override void Enter(BlueprintToolCHM tool, BlueprintToolMode fromMode)
         {

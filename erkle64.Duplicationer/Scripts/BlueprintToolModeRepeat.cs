@@ -24,7 +24,7 @@ namespace Duplicationer
         {
         }
 
-        public override string TabletTitle(BlueprintToolCHM tool) => "Place BLueprint - Repeat";
+        public override string TabletTitle(BlueprintToolCHM tool) => "Place Blueprint - Repeat";
 
         public override void Enter(BlueprintToolCHM tool, BlueprintToolMode fromMode)
         {

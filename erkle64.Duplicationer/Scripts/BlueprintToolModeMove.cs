@@ -150,7 +150,7 @@ namespace Duplicationer
                 {
                     int direction = mode - Mode.XPos;
                     int axis = direction >> 1;
-                    int dragStep = InputHelpers.IsAltHeld ? tool.CurrentBlueprintSize[axis] : 1;
+                    int dragStep = InputHelpers.IsAltHeld ? tool.CurrentBlueprintSize[axis] : (axis != 1 && tool.BlueprintHasTrainTracks) ? 4 : 1;
                     var roundedOffset = Mathf.RoundToInt(offset / dragStep) * dragStep;
                     if (Mathf.Abs(roundedOffset) >= dragStep)
                     {

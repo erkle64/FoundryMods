@@ -31,6 +31,8 @@ MonoBehaviour:
     header: Duplicationer - Copy/Paste
     text: 
     image: {fileID: 0}
+    overrideMaxHeight: 0
+    customMaxHeightPx: 0
     addImageText: 0
     imageTextData: []
   - paragraphType: 1
@@ -38,6 +40,8 @@ MonoBehaviour:
     text: Start by opening the blueprint tool.  The key defaults to "K" but you can
       change it from the main menu in Mods->Duplication->Settings.
     image: {fileID: 0}
+    overrideMaxHeight: 0
+    customMaxHeightPx: 0
     addImageText: 0
     imageTextData: []
   - paragraphType: 1
@@ -45,12 +49,16 @@ MonoBehaviour:
     text: The blueprint tool will default to selection mode.  You can start over
       at any time by holding the right mouse button and choosing "Select Area".
     image: {fileID: 0}
+    overrideMaxHeight: 0
+    customMaxHeightPx: 0
     addImageText: 0
     imageTextData: []
   - paragraphType: 2
     header: 
     text: 
     image: {fileID: 21300000, guid: e87ec050c68cff747a688e0ab1be66b8, type: 3}
+    overrideMaxHeight: 0
+    customMaxHeightPx: 0
     addImageText: 0
     imageTextData: []
   - paragraphType: 1
@@ -59,6 +67,8 @@ MonoBehaviour:
       to choose the height.  You can also click and drag to select the area and then
       once more to choose the height.
     image: {fileID: 0}
+    overrideMaxHeight: 0
+    customMaxHeightPx: 0
     addImageText: 0
     imageTextData: []
   - paragraphType: 1
@@ -67,12 +77,16 @@ MonoBehaviour:
       In resize mode you can click and drag on any side of the box to adjust the
       area.  Holding "ALT" will allow you to drag the opposite side of the area.
     image: {fileID: 0}
+    overrideMaxHeight: 0
+    customMaxHeightPx: 0
     addImageText: 0
     imageTextData: []
   - paragraphType: 2
     header: 
     text: 
     image: {fileID: 21300000, guid: aa805faceaa94c64c9c4002ce343f645, type: 3}
+    overrideMaxHeight: 0
+    customMaxHeightPx: 0
     addImageText: 0
     imageTextData: []
   - paragraphType: 1
@@ -80,12 +94,16 @@ MonoBehaviour:
     text: When you're happy with your selection hold right click and select the "Confirm
       Copy" option.
     image: {fileID: 0}
+    overrideMaxHeight: 0
+    customMaxHeightPx: 0
     addImageText: 0
     imageTextData: []
   - paragraphType: 2
     header: 
     text: 
     image: {fileID: 21300000, guid: 12d7a5a78d4ef164296a92787b180ba3, type: 3}
+    overrideMaxHeight: 0
+    customMaxHeightPx: 0
     addImageText: 0
     imageTextData: []
   - paragraphType: 1
@@ -96,6 +114,8 @@ MonoBehaviour:
       the sides of the box.  You can cycle through different movement modes by tapping
       "ALT" or holding right click and choosing from the menu wheel.
     image: {fileID: 0}
+    overrideMaxHeight: 0
+    customMaxHeightPx: 0
     addImageText: 0
     imageTextData: []
   - paragraphType: 1
@@ -104,12 +124,16 @@ MonoBehaviour:
       Paste".  You will need the appropriate items in your inventory to be able to
       paste them.
     image: {fileID: 0}
+    overrideMaxHeight: 0
+    customMaxHeightPx: 0
     addImageText: 0
     imageTextData: []
   - paragraphType: 2
     header: 
     text: 
     image: {fileID: 21300000, guid: 151d93f7f18067a40968765730486d11, type: 3}
+    overrideMaxHeight: 0
+    customMaxHeightPx: 0
     addImageText: 0
     imageTextData: []
   showNotificationOnUnlock: 0

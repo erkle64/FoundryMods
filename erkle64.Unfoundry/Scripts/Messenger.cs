@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using TinyJSON;
 
 namespace Unfoundry
@@ -51,6 +52,11 @@ namespace Unfoundry
                     handler.Value(JSON.Dump(message, EncodeOptions.NoTypeHints | EncodeOptions.DropNulls));
                 }
             }
+        }
+
+        public static void RegisterListener(string v, object applyDestroyTerrainRequest)
+        {
+            throw new NotImplementedException();
         }
     }
 }

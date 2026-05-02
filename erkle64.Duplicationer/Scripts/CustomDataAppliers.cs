@@ -4,6 +4,7 @@ using TinyJSON;
 using Unfoundry;
 using System.Linq;
 using System;
+using MessagePack;
 
 namespace Duplicationer
 {
@@ -196,7 +197,7 @@ namespace Duplicationer
             {
                 if (task.entityId > 0)
                 {
-                    GameRoot.addLockstepEvent(new SignSetTextEvent(usernameHash, task.entityId, signText, signUseAutoTextSize != 0, signTextMinSize, signTextMaxSize));
+                    GameRoot.addLockstepEvent(new SignSetTextEvent(usernameHash, task.entityId, signText, signUseAutoTextSize != 0, signTextMaxSize, signTextMinSize));
                 }
             });
         }
@@ -680,7 +681,7 @@ namespace Duplicationer
             => customData.HasCustomData("configuredItemTemplateId");
 
         public override void Apply(
-            BuildableObjectTemplate bot, 
+            BuildableObjectTemplate bot,
             CustomDataWrapper customData,
             List<PostBuildAction> postBuildActions,
             ulong usernameHash,
@@ -713,10 +714,347 @@ namespace Duplicationer
                             }
                         }
 
+                        GameRoot.addLockstepEvent(new ShippingPadResetEvent(usernameHash, task.entityId));
                         GameRoot.addLockstepEvent(new ShippingPadConfigureEvent(usernameHash, task.entityId, direction, configuredItemTemplateId, (int)minAmountToMove, allowedShipTypes));
                     }
                 });
             }
+        }
+    }
+
+    public class CDA_Workstation : CustomDataApplier
+    {
+        public override bool ShouldApply(BuildableObjectTemplate bot, CustomDataWrapper customData)
+            => customData.HasCustomData("robotSlotContents");
+
+        public override void GetRequiredItemCountsById(BuildableObjectTemplate bot, CustomDataWrapper customData, AddToShoppingListDelegate addToShoppingList)
+        {
+            var robotSlotContentsString = customData.GetCustomData<string>("robotSlotContents");
+            var robotSlotContentsParts = robotSlotContentsString.Split("|", StringSplitOptions.RemoveEmptyEntries);
+            for (int i = 0; i < robotSlotContentsParts.Length && i < WorkstationGO.MAX_ROBOT_SLOTS; i++)
+            {
+                if (ulong.TryParse(robotSlotContentsParts[i], out var slotContentId) && slotContentId > 0)
+                {
+                    addToShoppingList(slotContentId, 1);
+                }
+            }
+        }
+
+        public override void RemoveItems(BuildableObjectTemplate bot, ItemTemplate itemTemplate, ref CustomDataWrapper customData)
+        {
+            if (!customData.HasCustomData("robotSlotContents"))
+                return;
+
+            var robotSlotContentsString = customData.GetCustomData<string>("robotSlotContents");
+            var robotSlotContentsParts = robotSlotContentsString.Split("|", StringSplitOptions.RemoveEmptyEntries);
+            var newRobotSlotContentsParts = new List<string>();
+            for (int i = 0; i < robotSlotContentsParts.Length && i < WorkstationGO.MAX_ROBOT_SLOTS; i++)
+            {
+                if (ulong.TryParse(robotSlotContentsParts[i], out var slotContentId) && slotContentId != itemTemplate.id)
+                {
+                    newRobotSlotContentsParts.Add(robotSlotContentsParts[i]);
+                }
+            }
+            var newRobotSlotContentsString = string.Join("|", newRobotSlotContentsParts);
+            customData.Remove("robotSlotContents");
+            customData.Add("robotSlotContents", newRobotSlotContentsString);
+        }
+
+        private static CubeInterOp.ItemBufferPollingUpdateData[] _cache_itemBufferPollingData = new CubeInterOp.ItemBufferPollingUpdateData[64];
+
+        public override void Apply(
+            BuildableObjectTemplate bot,
+            CustomDataWrapper customData,
+            List<PostBuildAction> postBuildActions,
+            ulong usernameHash,
+            ref bool usePasteConfigSettings,
+            ref ulong pasteConfigSettings_01,
+            ref ulong pasteConfigSettings_02,
+            ref ulong additionalData_ulong_01,
+            ref ulong additionalData_ulong_02,
+            ref byte[] dcsData,
+            ref BlueprintData blueprintData,
+            Dictionary<ulong, ulong> entityIdMap)
+        {
+            var robotSlotContentsString = customData.GetCustomData<string>("robotSlotContents");
+            var robotSlotContentsParts = robotSlotContentsString.Split("|", StringSplitOptions.RemoveEmptyEntries);
+            var robotSlotContents = new ulong[WorkstationGO.MAX_ROBOT_SLOTS];
+
+            for (int i = 0; i < robotSlotContentsParts.Length && i < WorkstationGO.MAX_ROBOT_SLOTS; i++)
+                if (ulong.TryParse(robotSlotContentsParts[i], out var slotContentId))
+                    robotSlotContents[i] = slotContentId;
+
+            var clientCharacter = GameRoot.getClientCharacter();
+            var inventorySlotCount = InventoryManager.inventoryManager_getInventorySlotCountByPtr(clientCharacter.inventoryPtr);
+
+            postBuildActions.Add((ConstructionTaskGroup taskGroup, ConstructionTaskGroup.ConstructionTask task) =>
+            {
+                if (task.entityId > 0)
+                {
+                    InventoryManager.buildableEntity_populateItemBufferData(task.entityId, _cache_itemBufferPollingData, (uint)_cache_itemBufferPollingData.Length);
+
+                    for (uint slotIdx = 0; slotIdx < robotSlotContents.Length; slotIdx++)
+                    {
+                        var robotItemTemplateId = robotSlotContents[slotIdx];
+                        var robotItemTemplate = ItemTemplateManager.getItemTemplate(robotItemTemplateId);
+                        if (robotItemTemplate == null)
+                            continue;
+
+                        // check if client character has the robot item
+                        if (InventoryManager.inventoryManager_hasItem(clientCharacter.inventoryId, robotItemTemplateId, 1U, IOBool.iotrue) == IOBool.iofalse)
+                            continue;
+
+                        // search inventory for robot item
+                        uint foundSlotIdx = uint.MaxValue;
+                        for (uint invSlotIdx = 0; invSlotIdx < inventorySlotCount; invSlotIdx++)
+                        {
+                            ushort itemTemplateRunningIdx = 0;
+                            uint itemCount = 0;
+                            ushort lockedTemplateRunningIdx = 0;
+                            IOBool isLocked = IOBool.iofalse;
+                            InventoryManager.inventoryManager_getSingleSlotDataByPtr(clientCharacter.inventoryPtr, invSlotIdx, ref itemTemplateRunningIdx, ref itemCount, ref lockedTemplateRunningIdx, ref isLocked, IOBool.iotrue);
+                            if (itemTemplateRunningIdx == ushort.MaxValue)
+                                continue;
+
+                            if (itemTemplateRunningIdx == robotItemTemplate._runningTypeIdx_all && itemCount > 0)
+                            {
+                                foundSlotIdx = invSlotIdx;
+                                break;
+                            }
+                        }
+                        if (foundSlotIdx == uint.MaxValue)
+                            continue;
+
+                        // transfer robot item to workstation item buffer
+                        GameRoot.addLockstepEvent(new ItemMoveItemBufferEvent(
+                            clientCharacter,
+                            clientCharacter.inventoryId,
+                            foundSlotIdx,
+                            task.entityId,
+                            slotIdx,
+                            0U, // INV->BUFFER
+                            1U));
+                    }
+                }
+            });
+        }
+    }
+
+    public class CDA_Workstation_PowerCores : CustomDataApplier
+    {
+        public override bool ShouldApply(BuildableObjectTemplate bot, CustomDataWrapper customData)
+            => customData.HasCustomData("powerCoreSlotContents");
+
+        public override void GetRequiredItemCountsById(BuildableObjectTemplate bot, CustomDataWrapper customData, AddToShoppingListDelegate addToShoppingList)
+        {
+            var powerCoreSlotContentsString = customData.GetCustomData<string>("powerCoreSlotContents");
+            var powerCoreSlotContentsParts = powerCoreSlotContentsString.Split("|", StringSplitOptions.RemoveEmptyEntries);
+            for (int i = 0; i < powerCoreSlotContentsParts.Length && i < WorkstationGO.MAX_ROBOT_SLOTS; i++)
+            {
+                if (ulong.TryParse(powerCoreSlotContentsParts[i], out var slotContentId) && slotContentId > 0)
+                {
+                    addToShoppingList(slotContentId, 1);
+                }
+            }
+        }
+
+        public override void RemoveItems(BuildableObjectTemplate bot, ItemTemplate itemTemplate, ref CustomDataWrapper customData)
+        {
+            if (!customData.HasCustomData("powerCoreSlotContents"))
+                return;
+
+            var powerCoreSlotContentsString = customData.GetCustomData<string>("powerCoreSlotContents");
+            var powerCoreSlotContentsParts = powerCoreSlotContentsString.Split("|", StringSplitOptions.RemoveEmptyEntries);
+            var newPowerCoreSlotContentsParts = new List<string>();
+            for (int i = 0; i < powerCoreSlotContentsParts.Length && i < WorkstationGO.MAX_ROBOT_SLOTS; i++)
+            {
+                if (ulong.TryParse(powerCoreSlotContentsParts[i], out var slotContentId) && slotContentId != itemTemplate.id)
+                {
+                    newPowerCoreSlotContentsParts.Add(powerCoreSlotContentsParts[i]);
+                }
+            }
+            var newPowerCoreSlotContentsString = string.Join("|", newPowerCoreSlotContentsParts);
+            customData.Remove("powerCoreSlotContents");
+            customData.Add("powerCoreSlotContents", newPowerCoreSlotContentsString);
+        }
+
+        private static CubeInterOp.ItemBufferPollingUpdateData[] _cache_itemBufferPollingData = new CubeInterOp.ItemBufferPollingUpdateData[64];
+
+        public override void Apply(
+            BuildableObjectTemplate bot,
+            CustomDataWrapper customData,
+            List<PostBuildAction> postBuildActions,
+            ulong usernameHash,
+            ref bool usePasteConfigSettings,
+            ref ulong pasteConfigSettings_01,
+            ref ulong pasteConfigSettings_02,
+            ref ulong additionalData_ulong_01,
+            ref ulong additionalData_ulong_02,
+            ref byte[] dcsData,
+            ref BlueprintData blueprintData,
+            Dictionary<ulong, ulong> entityIdMap)
+        {
+            var powerCoreSlotContentsString = customData.GetCustomData<string>("powerCoreSlotContents");
+            var powerCoreSlotContentsParts = powerCoreSlotContentsString.Split("|", StringSplitOptions.RemoveEmptyEntries);
+            var powerCoreSlotContents = new ulong[WorkstationGO.MAX_ROBOT_SLOTS];
+
+            for (int i = 0; i < powerCoreSlotContentsParts.Length && i < WorkstationGO.MAX_ROBOT_SLOTS; i++)
+                if (ulong.TryParse(powerCoreSlotContentsParts[i], out var slotContentId))
+                    powerCoreSlotContents[i] = slotContentId;
+
+            var clientCharacter = GameRoot.getClientCharacter();
+            var inventorySlotCount = InventoryManager.inventoryManager_getInventorySlotCountByPtr(clientCharacter.inventoryPtr);
+
+            var robotSlotCount = bot.workstation_robotSlotCount;
+
+            postBuildActions.Add((ConstructionTaskGroup taskGroup, ConstructionTaskGroup.ConstructionTask task) =>
+            {
+                if (task.entityId > 0)
+                {
+                    InventoryManager.buildableEntity_populateItemBufferData(task.entityId, _cache_itemBufferPollingData, (uint)_cache_itemBufferPollingData.Length);
+
+                    for (uint slotIdx = 0; slotIdx < powerCoreSlotContents.Length; slotIdx++)
+                    {
+                        var powerCoreItemTemplateId = powerCoreSlotContents[slotIdx];
+                        var powerCoreItemTemplate = ItemTemplateManager.getItemTemplate(powerCoreItemTemplateId);
+                        if (powerCoreItemTemplate == null)
+                            continue;
+
+                        // check if client character has the power core item
+                        if (InventoryManager.inventoryManager_hasItem(clientCharacter.inventoryId, powerCoreItemTemplateId, 1U, IOBool.iotrue) == IOBool.iofalse)
+                            continue;
+
+                        // search inventory for robot item
+                        uint foundSlotIdx = uint.MaxValue;
+                        for (uint invSlotIdx = 0; invSlotIdx < inventorySlotCount; invSlotIdx++)
+                        {
+                            ushort itemTemplateRunningIdx = 0;
+                            uint itemCount = 0;
+                            ushort lockedTemplateRunningIdx = 0;
+                            IOBool isLocked = IOBool.iofalse;
+                            InventoryManager.inventoryManager_getSingleSlotDataByPtr(clientCharacter.inventoryPtr, invSlotIdx, ref itemTemplateRunningIdx, ref itemCount, ref lockedTemplateRunningIdx, ref isLocked, IOBool.iotrue);
+                            if (itemTemplateRunningIdx == ushort.MaxValue)
+                                continue;
+
+                            if (itemTemplateRunningIdx == powerCoreItemTemplate._runningTypeIdx_all && itemCount > 0)
+                            {
+                                foundSlotIdx = invSlotIdx;
+                                break;
+                            }
+                        }
+                        if (foundSlotIdx == uint.MaxValue)
+                            continue;
+
+                        // transfer power core item to workstation item buffer
+                        GameRoot.addLockstepEvent(new ItemMoveItemBufferEvent(
+                            clientCharacter,
+                            clientCharacter.inventoryId,
+                            foundSlotIdx,
+                            task.entityId,
+                            (uint)(slotIdx + robotSlotCount),
+                            0U, // INV->BUFFER
+                            1U));
+                    }
+                }
+            });
+        }
+    }
+
+    public class CDA_TrainStation : CustomDataApplier
+    {
+        public override bool ShouldApply(BuildableObjectTemplate bot, CustomDataWrapper customData)
+            => customData.HasCustomData("trainStation_name");
+
+        public override void Apply(
+            BuildableObjectTemplate bot,
+            CustomDataWrapper customData,
+            List<PostBuildAction> postBuildActions,
+            ulong usernameHash,
+            ref bool usePasteConfigSettings,
+            ref ulong pasteConfigSettings_01,
+            ref ulong pasteConfigSettings_02,
+            ref ulong additionalData_ulong_01,
+            ref ulong additionalData_ulong_02,
+            ref byte[] dcsData,
+            ref BlueprintData blueprintData,
+            Dictionary<ulong, ulong> entityIdMap)
+        {
+            var trainStationName = customData.GetCustomData<string>("trainStation_name");
+            var trainStationHasLimit = customData.HasCustomData("trainStation_trainLimit");
+            var trainStationTrainLimit = trainStationHasLimit ? customData.GetCustomData<int>("trainStation_trainLimit") : 0;
+            postBuildActions.Add((ConstructionTaskGroup taskGroup, ConstructionTaskGroup.ConstructionTask task) =>
+            {
+                if (task.entityId > 0)
+                {
+                    GameRoot.addLockstepEvent(new TrainStationSetNameEvent(usernameHash, trainStationName, task.entityId));
+                    if (trainStationHasLimit)
+                        GameRoot.addLockstepEvent(new TrainSystem.TrainStationSetTrainLimitEvent(usernameHash, task.entityId, trainStationTrainLimit));
+                }
+            });
+        }
+    }
+
+    public class CDA_TrainLoadingStation : CustomDataApplier
+    {
+        public override bool ShouldApply(BuildableObjectTemplate bot, CustomDataWrapper customData)
+            => customData.HasCustomData("trainLoadingStation_buildingMode");
+
+        public override void Apply(
+            BuildableObjectTemplate bot,
+            CustomDataWrapper customData,
+            List<PostBuildAction> postBuildActions,
+            ulong usernameHash,
+            ref bool usePasteConfigSettings,
+            ref ulong pasteConfigSettings_01,
+            ref ulong pasteConfigSettings_02,
+            ref ulong additionalData_ulong_01,
+            ref ulong additionalData_ulong_02,
+            ref byte[] dcsData,
+            ref BlueprintData blueprintData,
+            Dictionary<ulong, ulong> entityIdMap)
+        {
+            var buildingMode = customData.GetCustomData<byte>("trainLoadingStation_buildingMode");
+            postBuildActions.Add((ConstructionTaskGroup taskGroup, ConstructionTaskGroup.ConstructionTask task) =>
+            {
+                if (task.entityId > 0)
+                {
+                    GameRoot.addLockstepEvent(new TrainLoadingStationGO.SetModeEvent(usernameHash, task.entityId, buildingMode != 0));
+                }
+            });
+        }
+    }
+
+    public class CDA_Color : CustomDataApplier
+    {
+        public override bool ShouldApply(BuildableObjectTemplate bot, CustomDataWrapper customData)
+            => customData.HasCustomData("color_r")
+                && customData.HasCustomData("color_g")
+                && customData.HasCustomData("color_b");
+
+        public override void Apply(
+            BuildableObjectTemplate bot,
+            CustomDataWrapper customData,
+            List<PostBuildAction> postBuildActions,
+            ulong usernameHash,
+            ref bool usePasteConfigSettings,
+            ref ulong pasteConfigSettings_01,
+            ref ulong pasteConfigSettings_02,
+            ref ulong additionalData_ulong_01,
+            ref ulong additionalData_ulong_02,
+            ref byte[] dcsData,
+            ref BlueprintData blueprintData,
+            Dictionary<ulong, ulong> entityIdMap)
+        {
+            var colorR = customData.GetCustomData<byte>("color_r");
+            var colorG = customData.GetCustomData<byte>("color_g");
+            var colorB = customData.GetCustomData<byte>("color_b");
+            postBuildActions.Add((ConstructionTaskGroup taskGroup, ConstructionTaskGroup.ConstructionTask task) =>
+            {
+                if (task.entityId > 0)
+                {
+                    GameRoot.addLockstepEvent(new ColorizeObjectEvent(usernameHash, task.entityId, colorR, colorG, colorB, false, false));
+                }
+            });
         }
     }
 }

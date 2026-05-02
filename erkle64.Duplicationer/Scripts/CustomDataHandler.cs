@@ -24,6 +24,12 @@ namespace Duplicationer
             customData.Add(new BlueprintData.BuildableObjectData.CustomData(identifier, value));
         }
 
+        public void Remove(in string identifier)
+        {
+            for (int i = customData.Count - 1; i >= 0; i--)
+                if (customData[i].identifier == identifier) customData.RemoveAt(i);
+        }
+
         public bool HasCustomData(in string identifier)
         {
             foreach (var customDataEntry in customData) if (customDataEntry.identifier == identifier) return true;
@@ -73,7 +79,11 @@ namespace Duplicationer
 
     public abstract class CustomDataApplier
     {
+        public delegate void AddToShoppingListDelegate(ulong itemId, int count);
+
         public abstract bool ShouldApply(BuildableObjectTemplate bot, CustomDataWrapper customData);
+        public virtual void GetRequiredItemCountsById(BuildableObjectTemplate bot, CustomDataWrapper customData, AddToShoppingListDelegate addToShoppingList) { }
+        public virtual void RemoveItems(BuildableObjectTemplate bot, ItemTemplate itemTemplate, ref CustomDataWrapper customData) { }
         public abstract void Apply(
             BuildableObjectTemplate bot,
             CustomDataWrapper customData,

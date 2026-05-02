@@ -23,10 +23,12 @@ namespace Duplicationer
         [SerializeField] private GameObject _containerClearRecipes;
         [SerializeField] private GameObject _containerQueueControls;
         [SerializeField] private GameObject _containerDemolish;
+        [SerializeField] private GameObject _containerDroneDemolish;
         [SerializeField] private GameObject _containerDestroy;
         [SerializeField] private GameObject _containerPosition;
         [SerializeField] private GameObject _containerMaterialReport;
         [SerializeField] private GameObject _containerMaterialReportEntries;
+        [SerializeField] private GameObject _containerSelectBounds;
         [SerializeField] private MaterialReportEntry _materialReportEntryPrefab;
 
         private float _nextUpdateTimeCountTexts = 0.0f;
@@ -62,12 +64,16 @@ namespace Duplicationer
         {
             if (!IsOpen) return;
 
+            var dronesAvailable = ResearchSystem.isConstructionDroneUnlocked();
+            var destroyAvailable = DuplicationerSystem.isBulkDemolishRunning;
+
             _containerClearRecipes.gameObject.SetActive(_tool.CurrentBlueprint != null && _tool.CurrentBlueprint.HasRecipes);
             _containerQueueControls.gameObject.SetActive(!GameRoot.IsMultiplayerEnabled && ActionManager.HasQueuedEvents);
             _containerDemolish.gameObject.SetActive(_tool.boxMode != BlueprintToolCHM.BoxMode.None && _tool.CurrentMode != _tool.modeSelectArea);
-            //_containerDestroy.gameObject.SetActive(_tool.boxMode != BlueprintToolCHM.BoxMode.None && _tool.CurrentMode != _tool.modeSelectArea);
-            _containerDestroy.gameObject.SetActive(false);
+            _containerDroneDemolish.gameObject.SetActive(_tool.boxMode != BlueprintToolCHM.BoxMode.None && _tool.CurrentMode != _tool.modeSelectArea && dronesAvailable);
+            _containerDestroy.gameObject.SetActive(_tool.boxMode != BlueprintToolCHM.BoxMode.None && _tool.CurrentMode != _tool.modeSelectArea && destroyAvailable);
             _containerPosition.gameObject.SetActive(_tool.boxMode == BlueprintToolCHM.BoxMode.Blueprint);
+            _containerSelectBounds.gameObject.SetActive(_tool.IsBlueprintLoaded && _tool.IsBlueprintActive);
             _buttonSave.interactable = _tool.IsBlueprintLoaded;
             _buttonConfirmPaste.interactable = _tool.CurrentMode != null && _tool.CurrentMode.AllowPaste(_tool);
             _buttonConfirmCopy.interactable = _tool.CurrentMode != null && _tool.CurrentMode.AllowCopy(_tool);
@@ -142,38 +148,82 @@ namespace Duplicationer
             _textCheatMode.text = CheatModeButtonText;
         }
 
+        public void OnClick_SelectBounds()
+        {
+            _tool.SelectBounds();
+        }
+
         public void OnClick_DemolishDestroy(DemolishDestroyButtonMode mode)
         {
             if (mode.isDestroy)
             {
+                if (isShowingConfirmation)
+                    return;
+
+                isShowingConfirmation = true;
                 ConfirmationFrame.Show($"Permanently destroy {mode.label} in selection?",
-                    () => _tool.DestroyArea(mode.includeBuildings, mode.includeBlocks, mode.includeTerrain, mode.includeDecor));
-            }
-            if (Config.Hidden.demolishBounds.value)
-            {
-                _tool.DemolishArea(mode.includeBuildings, mode.includeBlocks, mode.includeTerrain, mode.includeDecor);
+                    () =>
+                    {
+                        ApplyDemolishDestroy();
+                        isShowingConfirmation = false;
+                    },
+                    () => isShowingConfirmation = false);
             }
             else
             {
-                var blueprint = _tool.CurrentBlueprint;
-                if (blueprint == null)
-                    return;
+                ApplyDemolishDestroy();
+            }
 
-                var ignoreSet = new HashSet<ulong>();
-                var repeatFrom = _tool.repeatFrom;
-                var repeatTo = _tool.repeatTo;
-                for (int y = repeatFrom.y; y <= repeatTo.y; ++y)
+            void ApplyDemolishDestroy()
+            {
+                if (Config.Hidden.demolishBounds.value)
                 {
-                    for (int z = repeatFrom.z; z <= repeatTo.z; ++z)
+                    if (mode.useDrones)
                     {
-                        for (int x = repeatFrom.x; x <= repeatTo.x; ++x)
+                        _tool.DroneDemolishArea();
+                    }
+                    else if (mode.isDestroy)
+                    {
+                        _tool.DestroyArea(mode.includeTerrain, mode.includeDecor);
+                    }
+                    else
+                    {
+                        _tool.DemolishArea(mode.includeBuildings, mode.includeBlocks, mode.includeTerrain, mode.includeDecor, mode.includeTracks);
+                    }
+                }
+                else
+                {
+                    var blueprint = _tool.CurrentBlueprint;
+                    if (blueprint == null)
+                        return;
+
+                    var ignoreSet = new HashSet<ulong>();
+                    var repeatFrom = _tool.repeatFrom;
+                    var repeatTo = _tool.repeatTo;
+                    for (int y = repeatFrom.y; y <= repeatTo.y; ++y)
+                    {
+                        for (int z = repeatFrom.z; z <= repeatTo.z; ++z)
                         {
-                            var position = _tool.CurrentBlueprintAnchor + new Vector3Int(x * _tool.CurrentBlueprintSize.x, y * _tool.CurrentBlueprintSize.y, z * _tool.CurrentBlueprintSize.z);
-                            foreach (var aabb in blueprint.EachAABB(position))
+                            for (int x = repeatFrom.x; x <= repeatTo.x; ++x)
                             {
-                                var from = new Vector3Int(aabb.x0, aabb.y0, aabb.z0);
-                                var to = new Vector3Int(aabb.x1 - 1, aabb.y1 - 1, aabb.z1 - 1);
-                                _tool.DemolishArea(mode.includeBuildings, mode.includeBlocks, mode.includeTerrain, mode.includeDecor, from, to, ignoreSet);
+                                var position = _tool.CurrentBlueprintAnchor + new Vector3Int(x * _tool.CurrentBlueprintSize.x, y * _tool.CurrentBlueprintSize.y, z * _tool.CurrentBlueprintSize.z);
+                                foreach (var aabb in blueprint.EachAABB(position))
+                                {
+                                    var from = new Vector3Int(aabb.x0, aabb.y0, aabb.z0);
+                                    var to = new Vector3Int(aabb.x1 - 1, aabb.y1 - 1, aabb.z1 - 1);
+                                    if (mode.useDrones)
+                                    {
+                                        _tool.DroneDemolishArea(from, to);
+                                    }
+                                    else if (mode.isDestroy)
+                                    {
+                                        _tool.DestroyArea(mode.includeTerrain, mode.includeDecor, from, to);
+                                    }
+                                    else
+                                    {
+                                        _tool.DemolishArea(mode.includeBuildings, mode.includeBlocks, mode.includeTerrain, mode.includeDecor, mode.includeTracks, from, to, ignoreSet);
+                                    }
+                                }
                             }
                         }
                     }
@@ -187,10 +237,18 @@ namespace Duplicationer
             _tool.SetPlaceholderOpacity(value);
         }
 
+        private static bool isShowingConfirmation = false;
         public void OnEntryClicked_MaterialReport(ItemTemplate itemTemplate)
         {
+            if (isShowingConfirmation)
+                return;
+
+            isShowingConfirmation = true;
             ConfirmationFrame.Show($"Remove all '{itemTemplate.name}'?", "Remove", () => {
                 _tool.RemoveItemFromBlueprint(itemTemplate);
+                isShowingConfirmation = false;
+            }, () => {
+                isShowingConfirmation = false;
             });
 
             ForceUpdateMaterialReport();

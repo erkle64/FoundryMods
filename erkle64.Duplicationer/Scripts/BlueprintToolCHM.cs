@@ -4,6 +4,7 @@ using Unfoundry;
 using System.Linq;
 using System.IO;
 using C3;
+using UnityEngine.Pool;
 
 namespace Duplicationer
 {
@@ -19,8 +20,10 @@ namespace Duplicationer
         public bool IsPlaceholdersHidden { get; private set; } = false;
         private BatchRenderingGroup placeholderRenderGroup = new BatchRenderingGroup();
         private List<BlueprintPlaceholder> buildingPlaceholders = new List<BlueprintPlaceholder>();
+        private List<BlueprintPlaceholder> trainTrackPlaceholders = new List<BlueprintPlaceholder>();
         private List<BlueprintPlaceholder> terrainPlaceholders = new List<BlueprintPlaceholder>();
         private int buildingPlaceholderUpdateIndex = 0;
+        private int trainTrackPlaceholderUpdateIndex = 0;
         private int terrainPlaceholderUpdateIndex = 0;
 
         private CustomRadialMenuStateControl menuStateControl = null;
@@ -34,6 +37,8 @@ namespace Duplicationer
         public readonly BlueprintToolModeMoveVertical modeMoveVertical;
         public readonly BlueprintToolModeRepeat modeRepeat;
         private BlueprintToolMode[] _blueprintToolModes;
+
+        public bool BlueprintHasTrainTracks => CurrentBlueprint != null && CurrentBlueprint.HasTrainTracks;
 
         internal BoxMode boxMode = BoxMode.None;
         public Vector3Int BlueprintMin => CurrentBlueprintAnchor;
@@ -177,6 +182,7 @@ namespace Duplicationer
         }
 
         public static bool IsActive { get; private set; } = false;
+
         public override void Enter()
         {
             if (CurrentMode == null) SelectMode(modePlace);
@@ -307,10 +313,10 @@ namespace Duplicationer
             AudioManager.playUISoundEffect(ResourceDB.resourceLinker.audioClip_recipeCopyTool_copy);
         }
 
-        public void CopyCustomSelection(Vector3Int from, Vector3Int size, IEnumerable<BuildableObjectGO> buildings, byte[] blocks)
+        public void CopyCustomSelection(Vector3Int from, Vector3Int size, IEnumerable<BuildableObjectGO> buildings, IEnumerable<ulong> trainTrackIds, byte[] blocks)
         {
             ClearBlueprintPlaceholders();
-            CurrentBlueprint = Blueprint.Create(from, size, buildings, blocks);
+            CurrentBlueprint = Blueprint.Create(from, size, buildings, trainTrackIds, blocks);
             TabletHelper.SetTabletTextQuickActions($"{GameRoot.getHotkeyStringFromAction("Action")}: Place Blueprint");
             isDragArrowVisible = false;
             SelectMode(modePlace);
@@ -329,7 +335,7 @@ namespace Duplicationer
             AudioManager.playUISoundEffect(ResourceDB.resourceLinker.audioClip_recipeCopyTool_copy);
         }
 
-        private BlueprintPlaceholder FindPlaceholder(int index)
+        private BlueprintPlaceholder FindPlaceholderForBuilding(int index)
         {
             for (int i = 0; i < buildingPlaceholders.Count; i++)
             {
@@ -342,7 +348,19 @@ namespace Duplicationer
             return null;
         }
 
-        private BlueprintPlaceholder FindPlaceholderByOriginalId(ulong entityId)
+        private BlueprintPlaceholder FindPlaceholderForTrainTracks(int index)
+        {
+            for (int i = 0; i < trainTrackPlaceholders.Count; i++)
+            {
+                if (trainTrackPlaceholders[i].Index == index && trainTrackPlaceholders[i].TrainTrackTemplate != null)
+                {
+                    return trainTrackPlaceholders[i];
+                }
+            }
+            return null;
+        }
+
+        private BlueprintPlaceholder FindPlaceholderByOriginalIdForBuilding(ulong entityId)
         {
             for (int i = 0; i < buildingPlaceholders.Count; i++)
                 if (buildingPlaceholders[i].OriginalEntityId == entityId && buildingPlaceholders[i].Template != null)
@@ -351,9 +369,18 @@ namespace Duplicationer
             return null;
         }
 
-        private ulong FindExistingEntityId(ulong originalEntityId)
+        private BlueprintPlaceholder FindPlaceholderByOriginalIdForTrainTracks(ulong entityId)
         {
-            var placeholder = FindPlaceholderByOriginalId(originalEntityId);
+            for (int i = 0; i < trainTrackPlaceholders.Count; i++)
+                if (trainTrackPlaceholders[i].OriginalEntityId == entityId && trainTrackPlaceholders[i].TrainTrackTemplate != null)
+                    return trainTrackPlaceholders[i];
+
+            return null;
+        }
+
+        private ulong FindExistingEntityIdForBuilding(ulong originalEntityId)
+        {
+            var placeholder = FindPlaceholderByOriginalIdForBuilding(originalEntityId);
             if (placeholder == null || placeholder.Template == null)
                 return 0uL;
 
@@ -373,8 +400,31 @@ namespace Duplicationer
             return Blueprint.CheckIfBuildingExists(aabb, worldPos, buildableObjectData);
         }
 
+        private ulong FindExistingEntityIdForTrainTracks(ulong originalEntityId)
+        {
+            var placeholder = FindPlaceholderByOriginalIdForTrainTracks(originalEntityId);
+            if (placeholder == null || placeholder.TrainTrackTemplate == null)
+                return 0uL;
+
+            var template = placeholder.TrainTrackTemplate;
+            var trainTrackData = CurrentBlueprint.GetTrainTrackData(placeholder.Index);
+
+            var repeatOffset = new Vector3Int(placeholder.RepeatIndex.x * CurrentBlueprintSize.x, placeholder.RepeatIndex.y * CurrentBlueprintSize.y, placeholder.RepeatIndex.z * CurrentBlueprintSize.z);
+            var worldPos = new Vector3Int(trainTrackData.worldX + CurrentBlueprintAnchor.x + repeatOffset.x, trainTrackData.worldY + CurrentBlueprintAnchor.y + repeatOffset.y, trainTrackData.worldZ + CurrentBlueprintAnchor.z + repeatOffset.z);
+
+            return Blueprint.CheckIfTrainTrackExists(worldPos, trainTrackData);
+        }
+
+        public static List<AABB3D> debugAABBs = new();
         public override void UpdateBehavoir()
         {
+            foreach (var debugAABB in debugAABBs)
+            {
+                var size = new Vector3(debugAABB.wx, debugAABB.wy, debugAABB.wz);
+                var center = new Vector3(debugAABB.x0, debugAABB.y0, debugAABB.z0) + size * 0.5f;
+                GameRoot.pushPerFrameHighlighterBox(center, size, 0);
+            }
+
             if (IsBlueprintActive)
             {
                 int count = Mathf.Min(Config.Events.maxBuildingValidationsPerFrame.value, buildingPlaceholders.Count);
@@ -385,7 +435,7 @@ namespace Duplicationer
                     var buildableObjectData = CurrentBlueprint.GetBuildableObjectData(placeholder.Index);
                     var buildableObjectPlaceholder = placeholder;
                     if (placeholder.Template == null)
-                        buildableObjectPlaceholder = FindPlaceholder(placeholder.Index);
+                        buildableObjectPlaceholder = FindPlaceholderForBuilding(placeholder.Index);
 
                     var buildableObjectTemplate = ItemTemplateManager.getBuildableObjectTemplate(buildableObjectData.templateId);
 
@@ -401,6 +451,13 @@ namespace Duplicationer
                     v3i[] powerLineCollisionArray = new v3i[0];
                     BuildingManager.buildingManager_validateConstruction_buildableEntityWrapper(new v3i(worldPos.x, worldPos.y, worldPos.z), buildableObjectData.orientationY, buildableObjectData.orientationUnlocked, buildableObjectData.templateId, ref errorCodeRaw, IOBool.iofalse, powerLineCollisionArray, 0);
                     var errorCode = (BuildingManager.CheckBuildableErrorCode)errorCodeRaw;
+
+                    if (errorCode == BuildingManager.CheckBuildableErrorCode.RequiresTrainTracks)
+                    {
+                        // for buildings that require train tracks, ignore the error about missing train tracks and just check if the building itself can be placed
+                        // this is because the train tracks might be part of the same blueprint and not yet recognized as existing in the world
+                        errorCode = BuildingManager.CheckBuildableErrorCode.Success;
+                    }
 
                     if (buildableObjectPlaceholder.ExtraBoundingBoxes != null)
                     {
@@ -478,7 +535,7 @@ namespace Duplicationer
                     if (placeholder.Template == null)
                     {
                         var entityData = new BuildableEntity.BuildableEntityGeneralData();
-                        var targetEntityId = FindExistingEntityId(placeholder.OriginalEntityId);
+                        var targetEntityId = FindExistingEntityIdForBuilding(placeholder.OriginalEntityId);
                         if (targetEntityId != 0uL && BuildingManager.buildingManager_getBuildableEntityGeneralData(targetEntityId, ref entityData) == IOBool.iotrue)
                         {
                             if (PowerLineHH.buildingManager_powerlineHandheld_checkIfAlreadyConnected(targetEntityId, positionFilledByEntityId) == IOBool.iotrue)
@@ -511,6 +568,54 @@ namespace Duplicationer
                     buildingPlaceholders[buildingPlaceholderUpdateIndex] = placeholder;
 
                     if (++buildingPlaceholderUpdateIndex >= buildingPlaceholders.Count) buildingPlaceholderUpdateIndex = 0;
+                }
+
+                count = Mathf.Min(Config.Events.maxTrainTrackValidationsPerFrame.value, trainTrackPlaceholders.Count);
+                if (trainTrackPlaceholderUpdateIndex >= trainTrackPlaceholders.Count) trainTrackPlaceholderUpdateIndex = 0;
+                for (int i = 0; i < count; i++)
+                {
+                    var placeholder = trainTrackPlaceholders[trainTrackPlaceholderUpdateIndex];
+                    var trainTrackData = CurrentBlueprint.GetTrainTrackData(placeholder.Index);
+                    var trainTrackPlaceholder = placeholder;
+                    if (placeholder.TrainTrackTemplate == null)
+                        trainTrackPlaceholder = FindPlaceholderForTrainTracks(placeholder.Index);
+
+                    var trainTrackTemplate = ItemTemplateManager.getTrainTrackTemplate(trainTrackData.templateId);
+                    var repeatOffset = new Vector3Int(trainTrackPlaceholder.RepeatIndex.x * CurrentBlueprintSize.x, trainTrackPlaceholder.RepeatIndex.y * CurrentBlueprintSize.y, trainTrackPlaceholder.RepeatIndex.z * CurrentBlueprintSize.z);
+                    var worldPos = new Vector3Int(trainTrackData.worldX + CurrentBlueprintAnchor.x + repeatOffset.x, trainTrackData.worldY + CurrentBlueprintAnchor.y + repeatOffset.y, trainTrackData.worldZ + CurrentBlueprintAnchor.z + repeatOffset.z);
+                    bool positionClear = true;
+                    bool positionFilled = false;
+                    uint terrainToClear = 0u;
+                    uint decorToClear = 0u;
+                    byte errorCode = 0;
+                    var validationResult = TrainSystem.trainSystemManager_validateConstructTracks(trainTrackTemplate.id, new v3i(worldPos), trainTrackData.orientationY, ref errorCode, ref terrainToClear, ref decorToClear);
+                    if (validationResult == IOBool.iofalse)
+                    {
+                        if (errorCode == (byte)TrainSystem.CheckTrainTracksErrorCode.AlreadyPlaced)
+                            positionFilled = true;
+                        else if (terrainToClear == 0 && decorToClear == 0)
+                            positionClear = false;
+                    }
+
+                    if (positionClear)
+                    {
+                        if (positionFilled)
+                        {
+                            placeholder.SetState(BlueprintPlaceholder.State.Done);
+                        }
+                        else
+                        {
+                            placeholder.SetState(BlueprintPlaceholder.State.Clear);
+                        }
+                    }
+                    else
+                    {
+                        placeholder.SetState(BlueprintPlaceholder.State.Blocked);
+                    }
+
+                    trainTrackPlaceholders[trainTrackPlaceholderUpdateIndex] = placeholder;
+
+                    if (++trainTrackPlaceholderUpdateIndex >= trainTrackPlaceholders.Count) trainTrackPlaceholderUpdateIndex = 0;
                 }
 
                 count = Mathf.Min(Config.Events.maxTerrainValidationsPerFrame.value, terrainPlaceholders.Count);
@@ -764,6 +869,12 @@ namespace Duplicationer
                 }
                 buildingPlaceholders.Clear();
 
+                foreach (var placeholder in trainTrackPlaceholders)
+                {
+                    placeholder.SetState(BlueprintPlaceholder.State.Invalid);
+                }
+                trainTrackPlaceholders.Clear();
+
                 foreach (var placeholder in terrainPlaceholders)
                 {
                     placeholder.SetState(BlueprintPlaceholder.State.Invalid);
@@ -776,9 +887,17 @@ namespace Duplicationer
 
         internal void MoveBlueprint(Vector3Int newPosition)
         {
-            if (IsBlueprintActive) OnBlueprintMoved(CurrentBlueprintAnchor, ref newPosition);
+            if (BlueprintHasTrainTracks)
+            {
+                // align to 4x4 grid if blueprint has train tracks
+                // note: must handle negative positions correctly, so that for example -1 becomes -4 instead of 0
+                newPosition.x = newPosition.x - (((newPosition.x % 4) + 4) % 4);
+                newPosition.z = newPosition.z - (((newPosition.z % 4) + 4) % 4);
+            }
 
             ShowBlueprint(newPosition);
+
+            if (IsBlueprintActive) OnBlueprintMoved();
         }
 
         internal void PlaceBlueprintMultiple(Vector3Int targetPosition, Vector3Int repeatFrom, Vector3Int repeatTo)
@@ -850,6 +969,14 @@ namespace Duplicationer
         {
             if (!IsBlueprintLoaded) return;
 
+            if (BlueprintHasTrainTracks)
+            {
+                // align to 4x4 grid if blueprint has train tracks
+                // note: must handle negative positions correctly, so that for example -1 becomes -4 instead of 0
+                targetPosition.x = targetPosition.x - (((targetPosition.x % 4) + 4) % 4);
+                targetPosition.z = targetPosition.z - (((targetPosition.z % 4) + 4) % 4);
+            }
+
             IsPlaceholdersHidden = false;
 
             if (!IsBlueprintActive)
@@ -857,13 +984,14 @@ namespace Duplicationer
                 IsBlueprintActive = true;
                 placeholderRenderGroup.Clear();
 
-                CurrentBlueprint?.Show(targetPosition, repeatFrom, repeatTo, CurrentBlueprintSize, placeholderRenderGroup, buildingPlaceholders, terrainPlaceholders);
+                CurrentBlueprint?.Show(targetPosition, repeatFrom, repeatTo, CurrentBlueprintSize, placeholderRenderGroup, buildingPlaceholders, trainTrackPlaceholders, terrainPlaceholders);
             }
             else if (targetPosition != CurrentBlueprintAnchor)
             {
                 var offset = targetPosition - CurrentBlueprintAnchor;
                 placeholderRenderGroup.Move(offset);
                 foreach (var placeholder in buildingPlaceholders) placeholder.Moved(offset);
+                foreach (var placeholder in trainTrackPlaceholders) placeholder.Moved(offset);
                 foreach (var placeholder in terrainPlaceholders) placeholder.Moved(offset);
             }
 
@@ -876,7 +1004,7 @@ namespace Duplicationer
             ShowBlueprint();
         }
 
-        private void OnBlueprintMoved(Vector3Int oldPosition, ref Vector3Int newPosition)
+        private void OnBlueprintMoved()
         {
             _blueprintFrame.UpdateBlueprintPositionText();
         }
@@ -990,69 +1118,42 @@ namespace Duplicationer
             return _terrainTypeRemovalMask;
         }
 
-        internal void DestroyArea(bool doBuildings, bool doBlocks, bool doTerrain, bool doDecor)
+        [System.Serializable]
+        private struct BulkDemolishTerrainDestroyRequest
+        {
+            public int worldPosX;
+            public int worldPosY;
+            public int worldPosZ;
+            public int sizeX;
+            public int sizeY;
+            public int sizeZ;
+            public bool destroyTerrain;
+            public bool destroyDecor;
+        }
+        internal void DestroyArea(bool doTerrain, bool doDecor, Vector3Int from, Vector3Int to)
+        {
+            Messenger.Send("BulkDemolishTerrain_Destroy", new BulkDemolishTerrainDestroyRequest
+            {
+                worldPosX = from.x,
+                worldPosY = from.y,
+                worldPosZ = from.z,
+                sizeX = to.x - from.x + 1,
+                sizeY = to.y - from.y + 1,
+                sizeZ = to.z - from.z + 1,
+                destroyTerrain = doTerrain,
+                destroyDecor = doDecor
+            });
+        }
+
+        internal void DestroyArea(bool doTerrain, bool doDecor)
         {
             if (TryGetSelectedArea(out Vector3Int from, out Vector3Int to))
             {
-                ulong characterHash = GameRoot.getClientCharacter().usernameHash;
-
-                if (doBuildings || doDecor)
-                {
-                    AABB3D aabb = new(from.x, from.y, from.z, to.x - from.x + 1, to.y - from.y + 1, to.z - from.z + 1);
-                    using (var query = StreamingSystem.get().queryAABB3D(aabb))
-                    {
-                        foreach (var bogo in query)
-                        {
-                            if (bogo.template.type == BuildableObjectTemplate.BuildableObjectType.WorldDecorMineAble)
-                            {
-                                if (doDecor)
-                                {
-                                    ActionManager.AddQueuedEvent(() => GameRoot.addLockstepEvent(new Character.DemolishBuildingEvent(characterHash, bogo.relatedEntityId, -2, 0)));
-                                }
-                            }
-                            else if (doBuildings)
-                            {
-                                ActionManager.AddQueuedEvent(() => GameRoot.addLockstepEvent(new Character.DemolishBuildingEvent(characterHash, bogo.relatedEntityId, -2, 0)));
-                            }
-                        }
-                    }
-                }
-
-                if (doBlocks || doTerrain)
-                {
-                    var shouldRemove = GetTerrainTypeRemovalMask();
-
-                    int blocksRemoved = 0;
-                    for (int wz = from.z; wz <= to.z; ++wz)
-                    {
-                        for (int wy = from.y; wy <= to.y; ++wy)
-                        {
-                            for (int wx = from.x; wx <= to.x; ++wx)
-                            {
-                                ChunkManager.getChunkIdxAndTerrainArrayIdxFromWorldCoords(wx, wy, wz, out ulong chunkIndex, out uint blockIndex);
-                                var terrainData = ChunkManager.chunks_getTerrainData(chunkIndex, blockIndex);
-
-                                if (terrainData >= GameRoot.BUILDING_PART_ARRAY_IDX_START && doBlocks)
-                                {
-                                    ulong entityId = 0;
-                                    ChunkManager.chunks_getBuildingPartBlock(chunkIndex, blockIndex, ref entityId);
-                                    ActionManager.AddQueuedEvent(() => GameRoot.addLockstepEvent(new Character.DemolishBuildingEvent(characterHash, entityId, -2, 0)));
-                                    ++blocksRemoved;
-                                }
-                                else if (doTerrain && terrainData > 0 && terrainData < GameRoot.BUILDING_PART_ARRAY_IDX_START && terrainData < shouldRemove.Count && shouldRemove[terrainData])
-                                {
-                                    var worldPos = new Vector3Int(wx, wy, wz);
-                                    ActionManager.AddQueuedEvent(() => GameRoot.addLockstepEvent(new Character.RemoveTerrainEvent(characterHash, worldPos, ulong.MaxValue, false)));
-                                    ++blocksRemoved;
-                                }
-                            }
-                        }
-                    }
-                }
+                DestroyArea(doTerrain, doDecor, from, to);
             }
         }
 
-        internal void DemolishArea(bool doBuildings, bool doBlocks, bool doTerrain, bool doDecor, Vector3Int from, Vector3Int to, HashSet<ulong> ignoreSet)
+        internal void DemolishArea(bool doBuildings, bool doBlocks, bool doTerrain, bool doDecor, bool doTracks, Vector3Int from, Vector3Int to, HashSet<ulong> ignoreSet)
         {
             ulong characterHash = GameRoot.getClientCharacter().usernameHash;
 
@@ -1093,6 +1194,20 @@ namespace Duplicationer
                 }
             }
 
+            if (doTracks)
+            {
+                AABB3D aabb = new(from.x, from.y, from.z, to.x - from.x + 1, to.y - from.y + 1, to.z - from.z + 1);
+                var trackEntityIds = ListPool<ulong>.Get();
+                TrainRenderSystem.get().queryTrainTracksByVoxelAABB3D(aabb, true, trackEntityIds);
+                foreach ( var trackEntityId in trackEntityIds)
+                {
+                    GameRoot.addLockstepEvent(
+                        new Character.DemolishTrainTrackEvent(characterHash, trackEntityId, 0)
+                        );
+                }
+                ListPool<ulong>.Release(trackEntityIds);
+            }
+
             if (doBlocks || doTerrain)
             {
                 var shouldRemove = GetTerrainTypeRemovalMask();
@@ -1127,12 +1242,42 @@ namespace Duplicationer
             }
         }
 
-        internal void DemolishArea(bool doBuildings, bool doBlocks, bool doTerrain, bool doDecor, HashSet<ulong> ignoreSet = null)
+        internal void DemolishArea(bool doBuildings, bool doBlocks, bool doTerrain, bool doDecor, bool doTracks, HashSet<ulong> ignoreSet = null)
         {
             if (TryGetSelectedArea(out Vector3Int from, out Vector3Int to))
             {
-                DemolishArea(doBuildings, doBlocks, doTerrain, doDecor, from, to, ignoreSet);
+                DemolishArea(doBuildings, doBlocks, doTerrain, doDecor, doTracks, from, to, ignoreSet);
             }
+        }
+
+        internal void DroneDemolishArea(Vector3Int from, Vector3Int to)
+        {
+            GameRoot.addLockstepEvent(new GameRoot.SetMiningAreaEvent(
+                new AABB3D(from.x, from.y, from.z, to.x - from.x + 1, to.y - from.y + 1, to.z - from.z + 1),
+                true
+            ));
+        }
+
+        internal void DroneDemolishArea()
+        {
+            if (TryGetSelectedArea(out Vector3Int from, out Vector3Int to))
+            {
+                DroneDemolishArea(from, to);
+            }
+        }
+
+        // clears blueprint and selects the area of the current blueprint
+        internal void SelectBounds()
+        {
+            if (!IsBlueprintLoaded || !IsBlueprintActive) return;
+
+            if (!TryGetSelectedArea(out var from, out var to))
+                return;
+
+            boxMode = BoxMode.Selection;
+            selectionFrom = from;
+            selectionTo = to;
+            SelectMode(modeResize);
         }
 
         private bool TryGetSelectedArea(out Vector3Int from, out Vector3Int to)
@@ -1225,7 +1370,7 @@ namespace Duplicationer
             CurrentBlueprint.RemoveItem(template);
             ClearBlueprintPlaceholders();
             ShowBlueprint(CurrentBlueprintAnchor);
-            AudioManager.playUISoundEffect(ResourceDB.resourceLinker.audioClip_bulkDemolishObjects);
+            AudioManager.playUISoundEffect(ResourceDB.resourceLinker.audioClip_UIButtonClick);
         }
 
         internal enum BoxMode

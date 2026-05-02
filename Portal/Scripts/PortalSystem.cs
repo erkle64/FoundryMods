@@ -279,14 +279,14 @@ namespace Portal
                     break;
                 case 1: // 90
                     target.x += localOffset.z;
-                    target.z += wx - localOffset.x;
+                    target.z += wz - localOffset.x;
                     break;
                 case 2: // 180
                     target.x += wx - localOffset.x;
                     target.z += wz - localOffset.z;
                     break;
                 case 3: // 270
-                    target.x += wz - localOffset.z;
+                    target.x += wx - localOffset.z;
                     target.z += localOffset.x;
                     break;
             }

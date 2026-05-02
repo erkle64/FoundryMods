@@ -59,8 +59,8 @@ namespace Duplicationer
         {
             var dsc = new DataProcessingEntityDataSystemControls();
             DSF_DataProcessor.dataProcessorEntity_modifyDSC(bogo.relatedEntityId, IOBool.iotrue, ref dsc);
-            var dcsData = MessagePackSerializer.Serialize(dsc, GlobalStateManager.msgp_options_fast);
-            customData.Add("dcsData", Convert.ToBase64String(dcsData));
+            var dcsData = JSON.Dump(dsc, EncodeOptions.NoTypeHints);
+            customData.Add("dcsData", dcsData);
         }
     }
 
@@ -518,6 +518,78 @@ namespace Duplicationer
                 }
                 customData.Add("allowedShipTypes", string.Join("|", allowedShipTypes));
             }
+        }
+    }
+
+    public class CDG_Workstation : TypedCustomDataGatherer<WorkstationGO>
+    {
+        private static ulong[] _cache_slotContentsArray = new ulong[WorkstationGO.MAX_ROBOT_SLOTS];
+        public override void Gather(BuildableObjectGO bogo, CustomDataWrapper customData, HashSet<BuildableObjectGO> powerGridBuildings)
+        {
+            var robotSlotCount = WorkstationGO.workstationEntity_querySlotContents(bogo.relatedEntityId, _cache_slotContentsArray, (uint)_cache_slotContentsArray.Length);
+            customData.Add("robotSlotContents", string.Join("|", _cache_slotContentsArray.AsSpan().Slice(0, (int)robotSlotCount).ToArray()));
+
+            var powerCoreSlotCount = WorkstationGO.workstationEntity_querySlotContents_powerCores(bogo.relatedEntityId, _cache_slotContentsArray, (uint)_cache_slotContentsArray.Length);
+            customData.Add("powerCoreSlotContents", string.Join("|", _cache_slotContentsArray.AsSpan().Slice(0, (int)powerCoreSlotCount).ToArray()));
+        }
+    }
+
+    public class CDG_TrainStation : TypedCustomDataGatherer<TrainStationGO>
+    {
+        public override void Gather(BuildableObjectGO bogo, CustomDataWrapper customData, HashSet<BuildableObjectGO> powerGridBuildings)
+        {
+            var data = new TrainStationPollingUpdateData();
+            if (TrainStationGO.trainStationEntity_queryPollingData(bogo.relatedEntityId, ref data) == IOBool.iofalse)
+                return;
+
+            if (data.isTrainLimitControlledByDataSystem == IOBool.iofalse)
+                customData.Add("trainStation_trainLimit", data.trainLimit);
+
+            byte color_r = 0;
+            byte color_g = 0;
+            byte color_b = 0;
+            BuildableEntity.buildableEntity_getObjectColor(bogo.relatedEntityId, ref color_r, ref color_g, ref color_b);
+            customData.Add("color_r", color_r);
+            customData.Add("color_g", color_g);
+            customData.Add("color_b", color_b);
+
+            byte[] nameBuffer = new byte[256];
+            uint nameLength = 0;
+            string stationName = TrainStationGO.trainStationEntity_getName(bogo.relatedEntityId, 0, nameBuffer, (uint)nameBuffer.Length, ref nameLength) == IOBool.iotrue
+                ? System.Text.Encoding.UTF8.GetString(nameBuffer, 0, (int)nameLength)
+                : string.Empty;
+            customData.Add("trainStation_name", stationName);
+
+            TrainStationDataSystemControls dsc = default;
+            DSF_TrainStation.trainStationEntity_modifyDSC(bogo.relatedEntityId, IOBool.iotrue, ref dsc);
+            var dcsData = MessagePackSerializer.Serialize(dsc, GlobalStateManager.msgp_options_fast);
+            customData.Add("dcsData", Convert.ToBase64String(dcsData));
+        }
+    }
+
+    public class CDG_TrainLoadingStation : TypedCustomDataGatherer<TrainLoadingStationGO>
+    {
+        public override void Gather(BuildableObjectGO bogo, CustomDataWrapper customData, HashSet<BuildableObjectGO> powerGridBuildings)
+        {
+            var data = new TrainLoadingStationPollingUpdateData();
+            if (TrainLoadingStationGO.trainLoadingStationEntity_queryPollingData(bogo.relatedEntityId, ref data) == IOBool.iofalse)
+                return;
+
+            var buildingMode = (byte)(TrainLoadingStationGO.isUnloading(data.buildingMode) ? 1 : 0);
+            customData.Add("trainLoadingStation_buildingMode", buildingMode);
+
+            byte color_r = 0;
+            byte color_g = 0;
+            byte color_b = 0;
+            BuildableEntity.buildableEntity_getObjectColor(bogo.relatedEntityId, ref color_r, ref color_g, ref color_b);
+            customData.Add("color_r", color_r);
+            customData.Add("color_g", color_g);
+            customData.Add("color_b", color_b);
+
+            TrainLoadingStationDataSystemControls dsc = default;
+            DSF_TrainLoadingStation.trainLoadingStationEntity_modifyDSC(bogo.relatedEntityId, IOBool.iotrue, ref dsc);
+            var dcsData = MessagePackSerializer.Serialize(dsc, GlobalStateManager.msgp_options_fast);
+            customData.Add("dcsData", Convert.ToBase64String(dcsData));
         }
     }
 }

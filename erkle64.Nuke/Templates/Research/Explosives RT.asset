@@ -59,8 +59,5 @@ MonoBehaviour:
   mapScanner_reservoir_identifier: 
   inventorySize_additionalInventorySlots: 0
   endlessResearch_amountOfManualEndlessResearches: 0
-  characterCraftingSpeed_additionalDecrementPercentage_str: 
-  miningDrillSpeed_miningTimeMultiplier_str: 
   miningHardness_unlockedLevel: 0
   jetpackSpeed_speedIncreasmentPercent_str: 
-  personalMiningDrones_additionalDrones: 0

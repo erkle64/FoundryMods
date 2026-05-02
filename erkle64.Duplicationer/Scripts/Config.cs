@@ -19,6 +19,9 @@ namespace Duplicationer
             [ModSettingTitle("Maximum Building Validations Per Frame")]
             public static ModSetting<int> maxBuildingValidationsPerFrame = 4;
 
+            [ModSettingTitle("Maximum Train Track Validations Per Frame")]
+            public static ModSetting<int> maxTrainTrackValidationsPerFrame = 4;
+
             [ModSettingTitle("Maximum Terrain Validations Per Frame")]
             public static ModSetting<int> maxTerrainValidationsPerFrame = 20;
         }

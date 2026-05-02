@@ -16,6 +16,14 @@ namespace Duplicationer
             return instances[instanceId] = new PlaceholderPattern(source, template);
         }
 
+        public static PlaceholderPattern Instance(GameObject source, TrainTrackTemplate template)
+        {
+            PlaceholderPattern instance;
+            int instanceId = source.GetInstanceID();
+            if (instances.TryGetValue(instanceId, out instance)) return instance;
+            return instances[instanceId] = new PlaceholderPattern(source, template);
+        }
+
         public Entry[] Entries { get; private set; }
 
         private PlaceholderPattern(GameObject source, BuildableObjectTemplate template)
@@ -62,6 +70,25 @@ namespace Duplicationer
                 MeshFilter meshFilter = meshFilters[i];
                 if (!IsValidMeshFilter(meshFilter, source)) continue;
 
+                var mesh = meshFilter.sharedMesh;
+                var relativeTransform = worldToLocalMatrix * meshFilter.transform.localToWorldMatrix;
+                Entries[index++] = new Entry(mesh, relativeTransform);
+            }
+        }
+
+        private PlaceholderPattern(GameObject source, TrainTrackTemplate template)
+        {
+            var meshFilters = source.GetComponentsInChildren<MeshFilter>(true);
+            var entryCount = 0;
+            foreach (var meshFilter in meshFilters) if (IsValidMeshFilter(meshFilter, source)) entryCount++;
+            Entries = new Entry[entryCount];
+            var localToWorldMatrix = source.transform.localToWorldMatrix;
+            var worldToLocalMatrix = source.transform.worldToLocalMatrix;
+            int index = 0;
+            for (int i = 0; i < meshFilters.Length; i++)
+            {
+                MeshFilter meshFilter = meshFilters[i];
+                if (!IsValidMeshFilter(meshFilter, source)) continue;
                 var mesh = meshFilter.sharedMesh;
                 var relativeTransform = worldToLocalMatrix * meshFilter.transform.localToWorldMatrix;
                 Entries[index++] = new Entry(mesh, relativeTransform);

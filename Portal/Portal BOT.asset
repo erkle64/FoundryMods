@@ -235,8 +235,10 @@ MonoBehaviour:
   conversionGroup_str: 
   isVisibleOnMap: 1
   mapColorPriority: 40
+  mapSprite: {fileID: 0}
   skipForRunningIdxGeneration: 0
-  audioClip_customBuildSound: {fileID: 8300000, guid: 557722da1684d5a4a9af196466afa99c, type: 3}
+  customBuildSound: {fileID: 0}
+  customDeconstructSound: {fileID: 0}
   hasNameOverride: 0
   nameOverride: 
   canBeCopiedByTablet: 1
@@ -277,6 +279,7 @@ MonoBehaviour:
   spp_disableGridCheck: 1
   spp_gridCheckType: 0
   hasEnergyGridConnection: 0
+  forceEgmRunningIdxGeneration: 0
   hasPoleGridConnection: 0
   poleGrid_connectionRange: 10
   poleGrid_connectorOffset: {x: 2, y: 3, z: 1}
@@ -299,6 +302,15 @@ MonoBehaviour:
   spawnFlyingDebrisWhenExploding: 1
   debrisWithExplosionForcePrefab: {fileID: 129258123506043949, guid: f549ccdd163879849a6f5bd55f4b5007, type: 3}
   itemBufferSlotMap: []
+  statusOverlay_offset_xpos: 0
+  statusOverlay_heightOffset_xpos: 0
+  statusOverlay_offset_xneg: 0
+  statusOverlay_heightOffset_xneg: 0
+  statusOverlay_offset_zpos: 0
+  statusOverlay_heightOffset_zpos: 0
+  statusOverlay_offset_zneg: 0
+  statusOverlay_heightOffset_zneg: 0
+  statusOverlay_heightOffset_ypos: 0
   hasRailings: 0
   walkway_mesh_noRailings:
     mesh: {fileID: 0}
@@ -384,7 +396,9 @@ MonoBehaviour:
   droneMiner_dockPositionInside: {x: 0, y: 0, z: 0}
   droneMiner_dockPositionOutside: {x: 0, y: 0, z: 0}
   droneMiner_audioClip_droneHover: {fileID: 0}
+  droneMiner_audioEvent_droneHover: {fileID: 0}
   droneMiner_audioClip_droneMining: {fileID: 0}
+  droneMiner_audioEvent_droneMining: {fileID: 0}
   droneMiner_dronePrefab: {fileID: 0}
   droneMiner_list_localBlocksAllowedToBeTraversed: []
   dissolver_elementalConsumptionPerSecond_str: 
@@ -401,6 +415,7 @@ MonoBehaviour:
   droneTransport_dronePrefab: {fileID: 0}
   droneTransport_droneYOffset: 0
   droneTransport_type: 0
+  droneTransport_slotCount: 0
   loader_localBeltOffset: {x: 0, y: 0, z: 0}
   loader_ticksPerAction: 0
   loader_idlePowerConsumption_kjPerS_str: 
@@ -431,7 +446,7 @@ MonoBehaviour:
   storage_allowPersonalLogisticsAccess: 0
   producerRecipeType: 0
   producer_recipeTimeModifier_str: 
-  producer_audioClip_active: {fileID: 0}
+  producer_audioEvent_active: {fileID: 0}
   producer_recipeType_fixed: 
   producer_showFixedCrInTooltip: 0
   producer_ttInputsAsPerSecValues: 0
@@ -439,9 +454,15 @@ MonoBehaviour:
   producer_fixedCrInfoText: 
   producer_recipeType_tags: []
   autoProducer_recipeTimeModifier_str: 
-  autoProducer_audioClip_active: {fileID: 0}
+  autoProducer_audioEvent_active: {fileID: 0}
   autoProducer_recipeType_tag: 
   producer_audioClip_customItemFinishSound: {fileID: 0}
+  producer_audioEvent_customItemFinishSound: {fileID: 0}
+  modularProducer_fixedCraftingRecipeIdentifier: 
+  modularProducer_recipeTimeModifier_str: 
+  modularProducer_recipeType_tags: []
+  modularProducer_uiDescription: 
+  modularEntityProducer_audioEvent_active: {fileID: 0}
   conveyor_isSlope: 0
   conveyor_slopePartner_str: 
   conveyor_material: {fileID: 0}
@@ -488,7 +509,7 @@ MonoBehaviour:
   transformer_audioClip_active: {fileID: 0}
   lvgGenerator_transmissionRate_kjPerS_str: 
   lvgGenerator_lockedItemTemplate_identifier: 
-  lvgGenerator_audioClip_active: {fileID: 0}
+  lvgGenerator_audioEvent_active: {fileID: 0}
   lvgGenerator_efficiency_str: 
   solarPanel_outputMax_str: 
   solarPanel_outputMin_str: 
@@ -500,6 +521,8 @@ MonoBehaviour:
   worldDecor_despawnPrefab: {fileID: 0}
   worldDecor_drillMaterial: {fileID: 0}
   worldDecor_audioClip_afterHarvesting: {fileID: 0}
+  worldDecor_audioEvent_crack: {fileID: 0}
+  worldDecor_audioEvent_afterHarvesting: {fileID: 0}
   worldDecor_isDebris: 0
   worldDecor_specialDrops: []
   worldDecor_scratchColor: {r: 1, g: 1, b: 1, a: 1}
@@ -524,6 +547,7 @@ MonoBehaviour:
   pumpjack_audioClip_active: {fileID: 0}
   burnerGenerator_powerGenertaionRate_kjPerS_str: 
   burnerGenerator_efficiency_str: 
+  burnerGenerator_helperInfoText: 
   mesh_powerPole: {fileID: 0}
   material_powerPolePreview: {fileID: 0}
   terrainBlock_tbtIdentifier: 
@@ -579,7 +603,8 @@ MonoBehaviour:
   resourceConverter_hasAdjacencyBonus: 0
   resourceConverter_powerDecreasePerAdjacentResourceConverter: 
   resourceConverter_adjacencyBonusAxis: 0
-  resourceConverter_audioClip_active: {fileID: 0}
+  resourceConverter_audioEvent_active: {fileID: 0}
+  resourceConverter_extraInfoText: 
   frackingTower_drillOffset:
     x: 0
     y: 0
@@ -760,22 +785,18 @@ MonoBehaviour:
   dataCableEntity_variants: []
   dataSourceEntity_signalSlots: 5
   dataSourceEntity_mode: 0
-  nppReactor_arrayInputs: []
-  nppReactor_coolingLiquid_identifier: 
-  nppReactor_baseCoolingLiquidDemandPerTick_str: 
-  nppReactor_additionalCoolingLiquidDemandPerTick_str: 
-  nppReactor_optionalCoolingLiquid_identifier: 
+  nppReactor_input_elementalTemplate_identifier: 
+  nppReactor_maxInputPerTick_str: 
   nppReactor_output_elementalTemplate_identifier: 
-  nppReactor_outputPerTick_str: 
+  nppReactor_maxOutputPerTick_str: 
+  nppReactor_steamGeneratorInput_elementalTemplate_identifier: 
   nppReactor_nominalTemperature: 0
   nppReactor_targetTemperature: 0
-  nppReactor_criticalTemperature: 0
-  nppReactor_catastrophicTemperature: 0
   nppReactor_cooldownTemperature: 0
   nppReactor_heatGainPerTick_str: 
   nppReactor_heatLossPerTick_str: 
-  nppReactor_emergencyVentBoTIdentifier: 
   nppReactor_controlRodsMovePercentagePerTick_str: 
+  nppReactor_fuelRodAudioEvent: {fileID: 0}
   nppSteamGenerator_reactorLoop_input_identifier: 
   nppSteamGenerator_reactorLoop_output_identifier: 
   nppSteamGenerator_coolingLoop_input_identifier: 
@@ -784,27 +805,20 @@ MonoBehaviour:
   nppSteamGenerator_conversionRate_reactorInputToReactorOutput_str: 
   nppSteamGenerator_conversionRate_reactorInputToCoolingOutput_str: 
   nppSteamGenerator_maxInputPertick_str: 
-  nppSteamTurbine_input_identifier: 
-  nppSteamTurbine_maxInputAmountPerTick_str: 
-  nppSteamTurbine_output_identifier: 
-  nppSteamTurbine_inputToOutputConversionRate_str: 
-  nppSteamTurbine_powerGenertaionRate_kjPerSec: 0
+  nppSteamTurbine_powerGenerationRate_kjPerSec_str: 
   nppSteamTurbine_efficiency_str: 
   nppCoolingTower_inputTurbine_identifier: 
   nppCoolingTower_inputTurbine_maxInputPerTick_str: 
-  nppCoolingTower_inputExtra_identifier: 
-  nppCoolingTower_turbineInputToExtraInputConversionRate_str: 
-  nppCoolingTower_inputCooling_identifier: 
-  nppCoolingTower_turbineInputToCoolingInputConversionRate_str: 
-  nppCoolingTower_output_identifier: 
-  nppCoolingTower_turbineInputToOutputConversionRate_str: 
   trainSignal_signalType: 0
   trainSignal_allowedSide: 0
   trainSignal_signalLightCount: 0
   trainSignal_signalStateMaterials: []
   trainSignal_defaultSignalLightMaterial: {fileID: 0}
+  trainSignal_highlighterArrowMaterial: {fileID: 0}
+  trainSignal_trainTrackSetIdentifier: 
   trainStationCSM_snapGridSize: 4
   trainStationCSM_offset: 0
+  trainStationCSM_offset_sideways: 0
   workstation_robotSlotCount: 1
   workstation_effectBoundsOffset:
     x: 0
@@ -823,3 +837,14 @@ MonoBehaviour:
   endlessMiner_powerDemandMining_kjPerSec_str: 
   endlessMiner_powerCoreSlots: 0
   endlessMiner_speedIncreasePerPowerCore_str: 
+  quarryBuilding_ExtraHeight: 3
+  quarryBuilding_SpeedXZ: 3
+  quarryBuilding_AccelXZ: 1
+  quarryBuilding_SpeedY: 3
+  quarryBuilding_AccelY: 1
+  quarryBuilding_DrillTime: 1
+  quarryBuilding_kjQuiescentPerTick: 100
+  quarryBuilding_kjConveyorPerTick: 600
+  quarryBuilding_kjActivePerTick: 10000
+  quarryBuilding_HeadHover: 0.25
+  quarryBuilding_HeadDepth: 0.75

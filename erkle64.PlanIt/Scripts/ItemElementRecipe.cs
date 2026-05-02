@@ -382,7 +382,7 @@ namespace PlanIt
                                 building.identifier,
                                 building.parentItemTemplate.name,
                                 building.parentItemTemplate.icon,
-                                building.droneMiner_miningSpeed_fpm / 10000.0,
+                                600000.0 / building.droneMiner_miningSpeed_fpm,
                                 building.energyConsumptionKW_fpm / 10000.0);
 
                             AddProducer("miner", producer);
@@ -426,7 +426,7 @@ namespace PlanIt
                                     building.identifier,
                                     building.parentItemTemplate.name,
                                     building.parentItemTemplate.icon,
-                                    1.0,
+                                    (building.fbm_ioFluidBoxes != null && building.fbm_ioFluidBoxes.Length >= 1) ? building.fbm_ioFluidBoxes[0].capacity_liter : 1.0,
                                     0.0);
                                 AddProducer($"pipe_intake", producer);
 

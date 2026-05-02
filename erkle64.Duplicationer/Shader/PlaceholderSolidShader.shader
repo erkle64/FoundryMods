@@ -9,6 +9,7 @@ Shader "Erkle/PlaceholderSolidShader"
     {
         Tags { "RenderType" = "Opaque" }
         LOD 200
+        Offset -1, -1
 
         CGPROGRAM
         #pragma surface surf Standard fullforwardshadows

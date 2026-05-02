@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using MessagePack.Formatters;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -36,6 +37,8 @@ namespace Duplicationer
         private bool _hasRecipes = false;
         public bool HasRecipes => _hasRecipes;
 
+        public bool HasTrainTracks => _data.trainTracks != null && _data.trainTracks.Length > 0;
+
         private static List<ConstructionTaskGroup.ConstructionTask> _dependenciesTemp = new List<ConstructionTaskGroup.ConstructionTask>();
         private static Dictionary<ConstructionTaskGroup.ConstructionTask, List<ulong>> _genericDependencies = new Dictionary<ConstructionTaskGroup.ConstructionTask, List<ulong>>();
 
@@ -43,7 +46,6 @@ namespace Duplicationer
         private static List<PostBuildAction> _postBuildActions = new List<PostBuildAction>();
 
         private static ItemTemplate _powerlineItemTemplate;
-
         public static ItemTemplate PowerlineItemTemplate
         {
             get => (_powerlineItemTemplate == null) ? _powerlineItemTemplate = ItemTemplateManager.getItemTemplate("_base_power_line_i") : _powerlineItemTemplate;
@@ -82,7 +84,7 @@ namespace Duplicationer
             _iconItemTemplates = iconItemTemplates;
 
             _hasRecipes = false;
-            _isMirrorable = true;
+            _isMirrorable = data.trainTracks == null || data.trainTracks.Length == 0;
             foreach (var buildableObjectData in data.buildableObjects)
             {
                 var template = ItemTemplateManager.getBuildableObjectTemplate(buildableObjectData.templateId);
@@ -139,13 +141,23 @@ namespace Duplicationer
                 }
             }
 
-            return Create(from, size, buildings, blocks);
+            var trainTrackIds = new HashSet<ulong>();
+            var trackIds = new List<ulong>();
+            TrainRenderSystem.get().queryTrainTracksByVoxelAABB3D(aabb, true, trackIds);
+            Debug.Log($"Found {trackIds.Count} train tracks in area");
+            foreach (ulong trackId in trackIds)
+            {
+                trainTrackIds.Add(trackId);
+            }
+            Debug.Log($"Found {trainTrackIds.Count} train tracks in area after deduplication");
+
+            return Create(from, size, buildings, trainTrackIds, blocks);
         }
 
         [DllImport("FoundryNative", EntryPoint = "buildableEntity_getObjectColor")]
         private static extern void buildableEntity_getObjectColor(ulong entityId, ref byte r, ref byte g, ref byte b);
 
-        public static Blueprint Create(Vector3Int from, Vector3Int size, IEnumerable<BuildableObjectGO> buildings, byte[] blocks)
+        public static Blueprint Create(Vector3Int from, Vector3Int size, IEnumerable<BuildableObjectGO> buildings, IEnumerable<ulong> trainTrackIds, byte[] blocks)
         {
             var to = from + size;
 
@@ -230,8 +242,98 @@ namespace Duplicationer
                 buildingIndex++;
             }
 
+            var trainTracksDataList = new List<BlueprintData.TrainTrackData>(trainTrackIds.Count());
+            int trainTrackIndex = 0;
+            TrainTracksQueryData trainTracksQueryData = default;
+            foreach (var trackId in trainTrackIds)
+            {
+                if (TrainTracksGO.trainTracks_getEntityData(trackId, ref trainTracksQueryData) == IOBool.iofalse)
+                {
+                    Debug.LogWarning($"Failed to get data for track {trackId}");
+                    continue;
+                }
+
+                trainTracksDataList.Add(new BlueprintData.TrainTrackData
+                {
+                    originalEntityId = trackId,
+                    templateId = trainTracksQueryData.trackTemplateId,
+                    worldX = trainTracksQueryData.anchoredPosition.x - from.x,
+                    worldY = trainTracksQueryData.anchoredPosition.y - from.y,
+                    worldZ = trainTracksQueryData.anchoredPosition.z - from.z,
+                    orientationY = (byte)trainTracksQueryData.orientationY
+                });
+
+                trainTrackIndex++;
+            }
+
+            if (trainTracksDataList.Count > 0)
+            {
+                var firstTrackData = trainTracksDataList[0];
+                var firstTrackTemplate = ItemTemplateManager.getTrainTrackTemplate(firstTrackData.templateId);
+                var gridSize = firstTrackTemplate.trackSet.snapGridSize;
+
+                var firstTrackPosition = new Vector3Int(firstTrackData.worldX, firstTrackData.worldY, firstTrackData.worldZ);
+                var offset = Vector3Int.zero; // distance to move blueprint so train tracks align to the grid (positive)
+
+                // Align X and Z to snap grid. (Y is not a snap axis for tracks here.)
+                offset.x = ((-firstTrackPosition.x) % gridSize + gridSize) % gridSize;
+                offset.z = ((-firstTrackPosition.z) % gridSize + gridSize) % gridSize;
+
+                // Expand size after applying offset; ensure repeatability on the grid (X and Z multiples of gridSize).
+                var newSize = size + offset;
+                if (newSize.x % gridSize != 0)
+                    newSize.x += gridSize - (newSize.x % gridSize);
+                if (newSize.z % gridSize != 0)
+                    newSize.z += gridSize - (newSize.z % gridSize);
+
+                // Expand/copy blocks into new array with offset applied.
+                if (newSize != size)
+                {
+                    Debug.Assert(newSize.y == size.y);
+                    var sizeDifference = newSize - size;
+
+                    var newBlocks = new byte[newSize.x * newSize.y * newSize.z];
+
+                    var oldIndex = 0;
+                    var newIndex = offset.z * newSize.x * newSize.y + offset.y * newSize.x + offset.x;
+
+                    for (int z = 0; z < size.z; z++)
+                    {
+                        for (int y = 0; y < size.y; y++)
+                        {
+                            Buffer.BlockCopy(blocks, oldIndex, newBlocks, newIndex, size.x);
+                            oldIndex += size.x;
+                            newIndex += newSize.x; // skip row padding implicitly
+                        }
+
+                        // We are already at the start of the next z-slice because newIndex advanced by size.y * newSize.x.
+                        // No extra jump needed here (newSize.y == size.y).
+                    }
+
+                    blocks = newBlocks;
+                    size = newSize;
+                }
+
+                // Apply offset to building positions
+                for (int i = 0; i < buildingDataArray.Length; i++)
+                {
+                    var newBlock = buildingDataArray[i];
+                    newBlock.worldPos += offset;
+                    buildingDataArray[i] = newBlock;
+                }
+
+                // Apply offset to train track positions
+                for (int i = 0; i < trainTracksDataList.Count; i++)
+                {
+                    var trackData = trainTracksDataList[i];
+                    trackData.worldPos += offset;
+                    trainTracksDataList[i] = trackData;
+                }
+            }
+
             BlueprintData blueprintData = new BlueprintData();
             blueprintData.buildableObjects = buildingDataArray;
+            blueprintData.trainTracks = trainTracksDataList.ToArray();
             blueprintData.blocks.sizeX = size.x;
             blueprintData.blocks.sizeY = size.y;
             blueprintData.blocks.sizeZ = size.z;
@@ -448,6 +550,8 @@ namespace Duplicationer
         private static BlueprintData LoadDataFromString(string blueprint, Dictionary<ulong, ShoppingListData> shoppingList)
         {
             var blueprintData = JSON.Load(blueprint).Make<BlueprintData>();
+            if (blueprintData.trainTracks == null)
+                blueprintData.trainTracks = new BlueprintData.TrainTrackData[0];
 
             BuildShoppingList(blueprintData, shoppingList);
 
@@ -630,6 +734,33 @@ namespace Duplicationer
                 }
             }
 
+            if (_data.trainTracks != null)
+            {
+                foreach (var trainTrackData in _data.trainTracks)
+                {
+                    var worldPos = new Vector3Int(trainTrackData.worldX, trainTrackData.worldY, trainTrackData.worldZ) + anchorPosition;
+
+                    var trackTemplate = ItemTemplateManager.getTrainTrackTemplate(trainTrackData.templateId);
+                    if (trackTemplate == null)
+                    {
+                        DuplicationerSystem.log.LogWarning($"No track template for id {trainTrackData.templateId}");
+                        continue;
+                    }
+
+                    var itemTemplate = trackTemplate.parentItemTemplate;
+                    if (itemTemplate == null)
+                    {
+                        DuplicationerSystem.log.LogWarning($"No item template for track template {trackTemplate.name}");
+                        continue;
+                    }
+
+                    ActionManager.AddQueuedEvent(() =>
+                    {
+                        GameRoot.addLockstepEvent(new TrainSystem.BuildTrainTracksEvent(usernameHash, itemTemplate.id, trackTemplate.id, new int[] { worldPos.x, worldPos.y, worldPos.z }, trainTrackData.orientationY, DuplicationerSystem.IsCheatModeEnabled ? 0 : 1, 0, false));
+                    });
+                }
+            }
+
             int buildingIndex = 0;
             foreach (var buildableObjectData in _data.buildableObjects)
             {
@@ -639,6 +770,23 @@ namespace Duplicationer
                 Debug.Assert(template != null);
 
                 var worldPos = new Vector3Int(buildableObjectData.worldX, buildableObjectData.worldY, buildableObjectData.worldZ) + anchorPosition;
+
+                int itemMode = buildableObjectData.itemMode;
+                if (template.parentItemTemplate.toggleableModeType == ItemTemplate.ItemTemplateToggleableModeTypes.MultipleBuildings)
+                {
+                    var toggleableModes = template.parentItemTemplate.toggleableModes;
+                    if (toggleableModes != null && toggleableModes.Length > 0)
+                    {
+                        for (int toggleableModeIndex = 0; toggleableModeIndex < toggleableModes.Length; toggleableModeIndex++)
+                        {
+                            if (toggleableModes[toggleableModeIndex].buildableObjectTemplate == template)
+                            {
+                                itemMode = toggleableModeIndex;
+                                break;
+                            }
+                        }
+                    }
+                }
 
                 int wx, wy, wz;
                 if (template.canBeRotatedAroundXAxis)
@@ -699,7 +847,7 @@ namespace Duplicationer
                         var buildEntityEvent = new BuildEntityEvent(
                             usernameHash,
                             template.parentItemTemplate.id,
-                            buildableObjectData.itemMode,
+                            itemMode,
                             new int[] { worldPos.x, worldPos.y, worldPos.z },
                             buildableObjectData.orientationY,
                             buildableObjectData.orientationUnlocked,
@@ -778,20 +926,116 @@ namespace Duplicationer
                 var template = ItemTemplateManager.getBuildableObjectTemplate(buildableObjectData.templateId);
                 if (template == null) continue;
 
-                int wx, wy, wz;
-                if (template.canBeRotatedAroundXAxis)
-                    BuildingManager.getWidthFromUnlockedOrientation(template.size, buildableObjectData.orientationUnlocked, out wx, out wy, out wz);
-                else
-                    BuildingManager.getWidthFromOrientation(template, (BuildingManager.BuildOrientation)buildableObjectData.orientationY, out wx, out wy, out wz);
+                AABB3D rootAABB;
+                // primary aabb based on template size and orientation
+                {
+                    int wx, wy, wz;
+                    if (template.canBeRotatedAroundXAxis)
+                        BuildingManager.getWidthFromUnlockedOrientation(template.size, buildableObjectData.orientationUnlocked, out wx, out wy, out wz);
+                    else
+                        BuildingManager.getWidthFromOrientation(template, (BuildingManager.BuildOrientation)buildableObjectData.orientationY, out wx, out wy, out wz);
 
-                yield return new AABB3D(
-                    buildableObjectData.worldX + origin.x,
-                    buildableObjectData.worldY + origin.y,
-                    buildableObjectData.worldZ + origin.z,
-                    wx,
-                    wy,
-                    wz
-                );
+                    yield return new AABB3D(
+                        buildableObjectData.worldX + origin.x,
+                        buildableObjectData.worldY + origin.y,
+                        buildableObjectData.worldZ + origin.z,
+                        wx,
+                        wy,
+                        wz
+                    );
+
+                    rootAABB = new AABB3D(buildableObjectData.worldX + origin.x, buildableObjectData.worldY + origin.y, buildableObjectData.worldZ + origin.z, wx, wy, wz);
+                    //BlueprintToolCHM.debugAABBs.Add(rootAABB);
+                }
+
+                // additional aabbs
+                foreach (var additionalAABB in template.additionalAABBs_input)
+                {
+                    var worldPosition = BuildableEntity._getWorldPositionByLocalOffsetOrientationY(
+                        rootAABB.x0, rootAABB.y0, rootAABB.z0,
+                        rootAABB.wx, rootAABB.wy, rootAABB.wz,
+                        buildableObjectData.orientationY, additionalAABB.localOffset);
+
+                    int wx, wy, wz;
+                    if (template.canBeRotatedAroundXAxis)
+                        BuildingManager.getWidthFromUnlockedOrientation(additionalAABB.size, buildableObjectData.orientationUnlocked, out wx, out wy, out wz);
+                    else
+                        BuildingManager.getWidthFromOrientation(additionalAABB.size, (BuildingManager.BuildOrientation)buildableObjectData.orientationY, out wx, out wy, out wz);
+
+                    if (buildableObjectData.orientationY == (int)BuildingManager.BuildOrientation.zNeg)
+                    {
+                        worldPosition.z = worldPosition.z - wz + 1;
+                    }
+                    else if (buildableObjectData.orientationY == (int)BuildingManager.BuildOrientation.xNeg)
+                    {
+                        worldPosition.x = worldPosition.x - wx + 1;
+                        worldPosition.z = worldPosition.z - wz + 1;
+                    }
+                    else if (buildableObjectData.orientationY == (int)BuildingManager.BuildOrientation.zPos)
+                    {
+                        worldPosition.x = worldPosition.x - wx + 1;
+                    }
+
+                    yield return new AABB3D(
+                        worldPosition.x,
+                        worldPosition.y,
+                        worldPosition.z,
+                        wx,
+                        wy,
+                        wz
+                    );
+                    //BlueprintToolCHM.debugAABBs.Add(new AABB3D(worldPosition.x, worldPosition.y, worldPosition.z, wx, wy, wz));
+                }
+
+                if (template.type == BuildableObjectTemplate.BuildableObjectType.Loader)
+                {
+                    var worldPosition = BuildableEntity._getWorldPositionByLocalOffsetOrientationY(
+                        rootAABB.x0, rootAABB.y0, rootAABB.z0,
+                        rootAABB.wx, rootAABB.wy, rootAABB.wz,
+                        buildableObjectData.orientationY, template.loader_localBeltOffset);
+
+                    yield return new AABB3D(
+                        worldPosition.x,
+                        worldPosition.y,
+                        worldPosition.z,
+                        1,
+                        1,
+                        1
+                    );
+                    //BlueprintToolCHM.debugAABBs.Add(new AABB3D(worldPosition.x, worldPosition.y, worldPosition.z, 1, 1, 1));
+                }
+
+                // modular building children aabbs
+                if (buildableObjectData.TryGetCustomData("modularBuildingData", out var rootNodeJSON))
+                {
+                    var worldPosition = new Vector3Int(buildableObjectData.worldX, buildableObjectData.worldY, buildableObjectData.worldZ) + origin;
+
+                    var rootNode = JSON.Load(rootNodeJSON).Make<ModularBuildingData>();
+                    foreach (var aabb in EachAABB(worldPosition, (BuildingManager.BuildOrientation)buildableObjectData.orientationY, rootNode))
+                        yield return aabb;
+                }
+            }
+
+            if (_data.trainTracks != null)
+            {
+                foreach (var trainTrackData in _data.trainTracks)
+                {
+                    var trackTemplate = ItemTemplateManager.getTrainTrackTemplate(trainTrackData.templateId);
+                    if (trackTemplate == null) continue;
+
+                    var orientationY = trainTrackData.orientationY % trackTemplate.orientationVariants.Length;
+                    foreach (var aabb in GetMinimalBoundsForTrainTracks(trackTemplate, orientationY))
+                    {
+                        yield return new AABB3D(
+                            trainTrackData.worldX + origin.x + aabb.x0,
+                            trainTrackData.worldY + origin.y + aabb.y0,
+                            trainTrackData.worldZ + origin.z + aabb.z0,
+                            aabb.wx,
+                            aabb.wy,
+                            aabb.wz
+                        );
+                    }
+                }
             }
 
             if (_data.blocks.ids != null)
@@ -818,6 +1062,157 @@ namespace Duplicationer
                     }
                 }
             }
+        }
+
+        private IEnumerable<AABB3D> EachAABB(Vector3Int origin, BuildingManager.BuildOrientation orientationY, ModularBuildingData rootNode)
+        {
+            var template = ItemTemplateManager.getBuildableObjectTemplate(rootNode.templateId);
+            if (template == null)
+            {
+                Debug.LogWarning($"No template found for modular building node with template id {rootNode.templateId}");
+                yield break;
+            }
+
+            AABB3D rootAABB;
+
+            // primary aabb based on template size and orientation
+            {
+                int wx, wy, wz;
+                BuildingManager.getWidthFromOrientation(template, orientationY, out wx, out wy, out wz);
+                yield return new AABB3D(
+                    origin.x,
+                    origin.y,
+                    origin.z,
+                    wx,
+                    wy,
+                    wz
+                );
+
+                rootAABB = new AABB3D(origin.x, origin.y, origin.z, wx, wy, wz);
+
+                //BlueprintToolCHM.debugAABBs.Add(rootAABB);
+            }
+
+            // additional aabbs
+            foreach (var additionalAABB in template.additionalAABBs_input)
+            {
+                var worldPosition = BuildableEntity._getWorldPositionByLocalOffsetOrientationY(
+                    rootAABB.x0, rootAABB.y0, rootAABB.z0,
+                    rootAABB.wx, rootAABB.wy, rootAABB.wz,
+                    (int)orientationY, additionalAABB.localOffset);
+                BuildingManager.getWidthFromOrientation(additionalAABB.size, orientationY, out var wx, out var wy, out var wz);
+
+                if (orientationY == BuildingManager.BuildOrientation.zNeg)
+                {
+                    worldPosition.z = worldPosition.z - wz + 1;
+                }
+                else if (orientationY == BuildingManager.BuildOrientation.xNeg)
+                {
+                    worldPosition.x = worldPosition.x - wx + 1;
+                    worldPosition.z = worldPosition.z - wz + 1;
+                }
+                else if (orientationY == BuildingManager.BuildOrientation.zPos)
+                {
+                    worldPosition.x = worldPosition.x - wx + 1;
+                }
+
+                yield return new AABB3D(
+                    worldPosition.x,
+                    worldPosition.y,
+                    worldPosition.z,
+                    wx,
+                    wy,
+                    wz
+                );
+
+                //BlueprintToolCHM.debugAABBs.Add(new AABB3D(worldPosition.x, worldPosition.y, worldPosition.z, wx, wy, wz));
+            }
+
+            for (int attachmentIndex = 0; attachmentIndex < rootNode.attachments.Length; attachmentIndex++)
+            {
+                var attachment = rootNode.attachments[attachmentIndex];
+                if (attachment == null) continue;
+
+                foreach (var node in template.modularBuildingConnectionNodes[attachmentIndex].nodeData)
+                {
+                    if (node.botId == attachment.templateId)
+                    {
+                        var attachmentTemplate = ItemTemplateManager.getBuildableObjectTemplate(attachment.templateId);
+
+                        var attachmentOrientation = (BuildingManager.BuildOrientation)(((int)node.positionData.orientation + (int)orientationY) % 4);
+                        var attachmentPosition = BuildableEntity._getWorldPositionByLocalOffsetOrientationY(
+                            rootAABB.x0, rootAABB.y0, rootAABB.z0,
+                            rootAABB.wx, rootAABB.wy, rootAABB.wz,
+                            (int)orientationY, node.positionData.offset);
+                        BuildingManager.getWidthFromOrientation(attachmentTemplate, attachmentOrientation, out var wx, out var wy, out var wz);
+
+                        if (orientationY == BuildingManager.BuildOrientation.zNeg)
+                        {
+                            attachmentPosition.z = attachmentPosition.z - wz + 1;
+                        }
+                        else if (orientationY == BuildingManager.BuildOrientation.xNeg)
+                        {
+                            attachmentPosition.x = attachmentPosition.x - wx + 1;
+                            attachmentPosition.z = attachmentPosition.z - wz + 1;
+                        }
+                        else if (orientationY == BuildingManager.BuildOrientation.zPos)
+                        {
+                            attachmentPosition.x = attachmentPosition.x - wx + 1;
+                        }
+
+                        foreach (var aabb in EachAABB(attachmentPosition, attachmentOrientation, attachment))
+                            yield return aabb;
+
+                        break;
+                    }
+                }
+            }
+        }
+
+        private Dictionary<ulong, Dictionary<int, List<AABB3D>>> _trainTrackBoundsByOrientationByTemplateId = new();
+        private List<AABB3D> GetMinimalBoundsForTrainTracks(TrainTrackTemplate trackTemplate, int orientationY)
+        {
+            orientationY = orientationY % trackTemplate.orientationVariants.Length;
+
+            if (!_trainTrackBoundsByOrientationByTemplateId.TryGetValue(trackTemplate.id, out Dictionary<int, List<AABB3D>> boundsByOrientation))
+            {
+                boundsByOrientation = new Dictionary<int, List<AABB3D>>();
+                _trainTrackBoundsByOrientationByTemplateId[trackTemplate.id] = boundsByOrientation;
+            }
+
+            if (boundsByOrientation.TryGetValue(orientationY, out List<AABB3D> bounds))
+                return bounds;
+
+            bounds = new List<AABB3D>();
+            boundsByOrientation[orientationY] = bounds;
+
+            var centerOffset = trackTemplate.orientationVariants[orientationY].highlighterMeshOffset;
+            var eulerY = trackTemplate.orientationVariants[orientationY].eulerY;
+            var rotation = Quaternion.Euler(0, eulerY, 0);
+            var transform = Matrix4x4.TRS(centerOffset, rotation, Vector3.one);
+            bool swapXZ = Mathf.Approximately(eulerY, 90f) || Mathf.Approximately(eulerY, 270f);
+            foreach (var collider in trackTemplate.prefabOnDisk.GetComponentsInChildren<BoxCollider>())
+            {
+                if (collider.gameObject.layer != GlobalStaticCache.s_Layer_TerrainTileCollider)
+                    continue;
+
+                var center = transform.MultiplyPoint3x4(collider.center);
+                var size = collider.size;
+                if (swapXZ)
+                {
+                    var temp = size.x;
+                    size.x = size.z;
+                    size.z = temp;
+                }
+
+                var min = Vector3Int.RoundToInt(center - size * 0.5f);
+                var max = Vector3Int.RoundToInt(center + size * 0.5f);
+                max.y += 5;
+
+                bounds.Add(new AABB3D(min.x, min.y, min.z, max.x - min.x, max.y - min.y, max.z - min.z));
+            }
+
+            return bounds;
         }
 
         private int CountModularParents(ulong parentId)
@@ -860,6 +1255,15 @@ namespace Duplicationer
             if (index < 0 || index >= data.buildableObjects.Length) throw new System.IndexOutOfRangeException(nameof(index));
 
             return data.buildableObjects[index];
+        }
+
+        internal BlueprintData.TrainTrackData GetTrainTrackData(int index) => GetTrainTrackData(ref _data, index);
+        internal static BlueprintData.TrainTrackData GetTrainTrackData(ref BlueprintData data, int index)
+        {
+            if (data.trainTracks == null) throw new System.InvalidOperationException("Blueprint does not contain train track data");
+            if (index < 0 || index >= data.trainTracks.Length) throw new System.IndexOutOfRangeException(nameof(index));
+
+            return data.trainTracks[index];
         }
 
         internal byte GetBlockId(int x, int y, int z) => GetBlockId(ref _data, x, y, z);
@@ -926,6 +1330,27 @@ namespace Duplicationer
             return 0ul;
         }
 
+        static readonly List<ulong> trackEntityIds = new();
+        internal static ulong CheckIfTrainTrackExists(Vector3Int worldPos, BlueprintData.TrainTrackData trackData)
+        {
+            using (var query = TrainRenderSystem.get().queryTrainTracksAABB3D(new AABB3D(worldPos.x, worldPos.y, worldPos.z, 1, 1, 1)))
+            {
+                if (query.results.Count > 0)
+                {
+                    var trackTemplate = ItemTemplateManager.getTrainTrackTemplate(trackData.templateId);
+                    foreach (var track in query)
+                    {
+                        if (track.template == trackTemplate && track.anchoredPos == worldPos && track.orientationY == trackData.orientationY)
+                        {
+                            return track.relatedEntityId;
+                        }
+                    }
+                }
+            }
+
+            return 0ul;
+        }
+
         public void Rotate()
         {
             var oldSize = Size;
@@ -933,9 +1358,11 @@ namespace Duplicationer
             var oldCenter = ((Vector3)oldSize) / 2.0f;
             var newCenter = ((Vector3)newSize) / 2.0f;
 
-            var rotatedData = new BlueprintData(_data.buildableObjects.Length, _data.blocks.Size);
+            var rotatedData = new BlueprintData(_data.buildableObjects.Length, (_data.trainTracks == null) ? 0 : _data.trainTracks.Length, _data.blocks.Size);
             rotatedData.buildableObjects = new BlueprintData.BuildableObjectData[_data.buildableObjects.Length];
+            rotatedData.trainTracks = new BlueprintData.TrainTrackData[(_data.trainTracks == null) ? 0 : _data.trainTracks.Length];
             rotatedData.blocks.ids = new byte[_data.blocks.ids.Length];
+
             for (int i = 0; i < _data.buildableObjects.Length; ++i)
             {
                 var buildableObjectData = _data.buildableObjects[i];
@@ -980,6 +1407,24 @@ namespace Duplicationer
                 rotatedData.buildableObjects[i] = buildableObjectData;
             }
 
+            if (_data.trainTracks != null)
+            {
+                for (int i = 0; i < _data.trainTracks.Length; ++i)
+                {
+                    var trackData = _data.trainTracks[i];
+                    var trackTemplate = ItemTemplateManager.getTrainTrackTemplate(trackData.templateId);
+                    var newOrientationY = (byte)((trackData.orientationY + trackTemplate.orientationVariants.Length - 1) % trackTemplate.orientationVariants.Length);
+                    var offsetX = (trackData.worldZ + trackTemplate.orientationVariants[trackData.orientationY].highlighterMeshOffset.z) - oldCenter.z;
+                    var offsetZ = oldCenter.x - (trackData.worldX + trackTemplate.orientationVariants[trackData.orientationY].highlighterMeshOffset.x);
+                    var newX = Mathf.RoundToInt(newCenter.x + offsetX - trackTemplate.orientationVariants[newOrientationY].highlighterMeshOffset.x);
+                    var newZ = Mathf.RoundToInt(newCenter.z + offsetZ - trackTemplate.orientationVariants[newOrientationY].highlighterMeshOffset.z);
+                    trackData.worldX = newX;
+                    trackData.worldZ = newZ;
+                    trackData.orientationY = newOrientationY;
+                    rotatedData.trainTracks[i] = trackData;
+                }
+            }
+
             var newBlockIds = new byte[_data.blocks.ids.Length];
             int fromIndex = 0;
             for (int x = 0; x < newSize.x; x++)
@@ -998,12 +1443,20 @@ namespace Duplicationer
             _data = rotatedData;
         }
 
+        private static readonly HashSet<ulong> _sidewaysBuildingTemplateIds = new()
+        {
+            BuildableObjectTemplate.generateStringHash("_base_workstation_i"),
+            BuildableObjectTemplate.generateStringHash("_base_workstation_ii"),
+            BuildableObjectTemplate.generateStringHash("_base_workstation_iii"),
+            BuildableObjectTemplate.generateStringHash("_base_sign")
+        };
         public void Mirror()
         {
             var size = Size;
 
-            var mirroredData = new BlueprintData(_data.buildableObjects.Length, _data.blocks.Size);
+            var mirroredData = new BlueprintData(_data.buildableObjects.Length, (_data.trainTracks == null) ? 0 : _data.trainTracks.Length, _data.blocks.Size);
             mirroredData.buildableObjects = new BlueprintData.BuildableObjectData[_data.buildableObjects.Length];
+            mirroredData.trainTracks = new BlueprintData.TrainTrackData[(_data.trainTracks == null) ? 0 : _data.trainTracks.Length];
             mirroredData.blocks.ids = new byte[_data.blocks.ids.Length];
             for (int i = 0; i < _data.buildableObjects.Length; ++i)
             {
@@ -1015,6 +1468,8 @@ namespace Duplicationer
                 {
                     var oldOrientation = buildableObjectData.orientationY;
                     var needsRotation = buildableObjectData.orientationY == 0 || buildableObjectData.orientationY == 2;
+                    if (_sidewaysBuildingTemplateIds.Contains(template.id))
+                        needsRotation = !needsRotation;
                     var newOrientation = needsRotation ? (byte)((oldOrientation + 2) & 0x3) : oldOrientation;
                     BuildingManager.getWidthFromOrientation(template, (BuildingManager.BuildOrientation)newOrientation, out var wx, out _, out _);
                     newX -= wx;
@@ -1034,6 +1489,24 @@ namespace Duplicationer
 
                 buildableObjectData.worldX = newX;
                 mirroredData.buildableObjects[i] = buildableObjectData;
+            }
+
+            if (_data.trainTracks != null)
+            {
+                for (int i = 0; i < _data.trainTracks.Length; ++i)
+                {
+                    var trackData = _data.trainTracks[i];
+                    var newX = size.x - trackData.worldX;
+                    var trackTemplate = ItemTemplateManager.getTrainTrackTemplate(trackData.templateId);
+                    if (trackTemplate != null)
+                    {
+                        trackData.orientationY = (byte)((trackData.orientationY + trackTemplate.orientationVariants.Length - 2) % trackTemplate.orientationVariants.Length);
+                        var wx = trackTemplate.orientationVariants[trackData.orientationY].list_aabbs[0].size.x;
+                        newX -= wx;
+                    }
+                    trackData.worldX = newX;
+                    mirroredData.trainTracks[i] = trackData;
+                }
             }
 
             var newBlockIds = new byte[_data.blocks.ids.Length];
@@ -1115,6 +1588,23 @@ namespace Duplicationer
                     }
                 }
             }
+            else if (template.flags.HasFlagNonAlloc(ItemTemplate.ItemTemplateFlags.TRAIN_TRACKS))
+            {
+                if (_data.trainTracks != null)
+                {
+                    var newTrainTracks = new List<BlueprintData.TrainTrackData>(_data.trainTracks.Length);
+                    for (int i = 0; i < _data.trainTracks.Length; ++i)
+                    {
+                        var trackData = _data.trainTracks[i];
+                        var trackTemplate = ItemTemplateManager.getTrainTrackTemplate(trackData.templateId);
+                        if (trackTemplate == null || trackTemplate.parentItemTemplate != template)
+                        {
+                            newTrainTracks.Add(trackData);
+                        }
+                    }
+                    _data.trainTracks = newTrainTracks.ToArray();
+                }
+            }
             else
             {
                 var newBuildableObjects = new List<BlueprintData.BuildableObjectData>(_data.buildableObjects.Length);
@@ -1125,6 +1615,13 @@ namespace Duplicationer
                     var bot = ItemTemplateManager.getBuildableObjectTemplate(buildableObjectData.templateId);
                     if (bot == null || bot.parentItemTemplate != template)
                     {
+                        var customDataWrapper = new CustomDataWrapper(buildableObjectData.customData);
+                        foreach (var cda in CustomDataApplier.All)
+                        {
+                            cda.RemoveItems(bot, template, ref customDataWrapper);
+                        }
+                        buildableObjectData.customData = customDataWrapper.customData.ToArray();
+
                         newBuildableObjects.Add(buildableObjectData);
                     }
                 }
@@ -1206,6 +1703,20 @@ namespace Duplicationer
                 if (buildingTemplate != null && buildingTemplate.parentItemTemplate != null)
                 {
                     AddToShoppingList(shoppingList, buildingTemplate.parentItemTemplate);
+
+                    var customDataWrapper = new CustomDataWrapper(buildingData.customData);
+                    foreach (var applier in CustomDataApplier.All)
+                    {
+                        if (applier.ShouldApply(buildingTemplate, customDataWrapper))
+                        {
+                            applier.GetRequiredItemCountsById(buildingTemplate, customDataWrapper, (ulong itemId, int count) =>
+                            {
+                                var itemTemplate = ItemTemplateManager.getItemTemplate(itemId);
+                                if (itemTemplate != null)
+                                    AddToShoppingList(shoppingList, itemTemplate, count);
+                            });
+                        }
+                    }
                 }
 
                 powerlineEntityIds.Clear();
@@ -1214,9 +1725,21 @@ namespace Duplicationer
 
                 ++buildingIndex;
             }
+
+            if (blueprintData.trainTracks != null)
+            {
+                foreach (var trainTrackData in blueprintData.trainTracks)
+                {
+                    var trackTemplate = ItemTemplateManager.getTrainTrackTemplate(trainTrackData.templateId);
+                    if (trackTemplate != null && trackTemplate.parentItemTemplate != null)
+                    {
+                        AddToShoppingList(shoppingList, trackTemplate.parentItemTemplate);
+                    }
+                }
+            }
         }
 
-        public void Show(Vector3Int anchorPosition, Vector3Int repeatFrom, Vector3Int repeatTo, Vector3Int repeatStepSize, BatchRenderingGroup placeholderRenderGroup, List<BlueprintPlaceholder> buildingPlaceholders, List<BlueprintPlaceholder> terrainPlaceholders)
+        public void Show(Vector3Int anchorPosition, Vector3Int repeatFrom, Vector3Int repeatTo, Vector3Int repeatStepSize, BatchRenderingGroup placeholderRenderGroup, List<BlueprintPlaceholder> buildingPlaceholders, List<BlueprintPlaceholder> trainTrackPlaceholders, List<BlueprintPlaceholder> terrainPlaceholders)
         {
             for (int ry = repeatFrom.y; ry <= repeatTo.y; ++ry)
             {
@@ -1264,7 +1787,7 @@ namespace Duplicationer
                                 AABB3D aabb = new(0, 0, 0, wx, wy, wz);
                                 BuildModularBuildPlaceholders(anchorPosition, handles, placeholderRenderGroup, buildingPlaceholders, repeatIndex, buildingIndex, template, baseTransform, position + centerOffset, orientation, aabb, modularBuildingData, extraBoundingBoxes);
 
-                                buildingPlaceholders.Add(new BlueprintPlaceholder(buildableObjectData.originalEntityId, buildingIndex, repeatIndex, template, template.parentItemTemplate, position, rotation, orientation, handles.ToArray(), extraBoundingBoxes: extraBoundingBoxes.ToArray()));
+                                buildingPlaceholders.Add(new BlueprintPlaceholder(buildableObjectData.originalEntityId, buildingIndex, repeatIndex, template, null, template.parentItemTemplate, position, rotation, orientation, handles.ToArray(), extraBoundingBoxes: extraBoundingBoxes.ToArray()));
                             }
                             else
                             {
@@ -1277,7 +1800,7 @@ namespace Duplicationer
                                     handles[i] = placeholderRenderGroup.AddSimplePlaceholderTransform(entry.mesh, transform, BlueprintPlaceholder.stateColours[1]);
                                 }
 
-                                buildingPlaceholders.Add(new BlueprintPlaceholder(buildableObjectData.originalEntityId, buildingIndex, repeatIndex, template, template.parentItemTemplate, position, rotation, orientation, handles));
+                                buildingPlaceholders.Add(new BlueprintPlaceholder(buildableObjectData.originalEntityId, buildingIndex, repeatIndex, template, null, template.parentItemTemplate, position, rotation, orientation, handles));
                             }
 
                             if (buildableObjectData.HasCustomData("powerline"))
@@ -1287,8 +1810,30 @@ namespace Duplicationer
 
                                 foreach (var powerLineEntityId in powerLineEntityIds)
                                 {
-                                    buildingPlaceholders.Add(new BlueprintPlaceholder(powerLineEntityId, buildingIndex, repeatIndex, null, PowerlineItemTemplate, position, rotation, orientation, null));
+                                    buildingPlaceholders.Add(new BlueprintPlaceholder(powerLineEntityId, buildingIndex, repeatIndex, null, null, PowerlineItemTemplate, position, rotation, orientation, null));
                                 }
+                            }
+                        }
+
+                        if (_data.trainTracks != null)
+                        {
+                            for (int trainTrackIndex = 0; trainTrackIndex < _data.trainTracks.Length; trainTrackIndex++)
+                            {
+                                var trackData = _data.trainTracks[trainTrackIndex];
+                                var trackTemplate = ItemTemplateManager.getTrainTrackTemplate(trackData.templateId);
+                                if (trackTemplate == null) continue;
+                                var offset = trackTemplate.orientationVariants[trackData.orientationY].highlighterMeshOffset;
+                                var position = new Vector3(trackData.worldX, trackData.worldY, trackData.worldZ) + offset + repeatAnchorPosition;
+                                var rotation = Quaternion.Euler(0, trackTemplate.orientationVariants[trackData.orientationY].eulerY, 0);
+                                var pattern = PlaceholderPattern.Instance(trackTemplate.placeholderPrefab, trackTemplate);
+                                var handles = new BatchRenderingHandle[pattern.Entries.Length];
+                                for (int i = 0; i < pattern.Entries.Length; i++)
+                                {
+                                    var entry = pattern.Entries[i];
+                                    var transform = Matrix4x4.TRS(position, rotation, Vector3.one) * entry.relativeTransform;
+                                    handles[i] = placeholderRenderGroup.AddSimplePlaceholderTransform(entry.mesh, transform, BlueprintPlaceholder.stateColours[1]);
+                                }
+                                trainTrackPlaceholders.Add(new BlueprintPlaceholder(trackData.originalEntityId, trainTrackIndex, repeatIndex, null, trackTemplate, trackTemplate.parentItemTemplate, position, rotation, (BuildingManager.BuildOrientation)trackData.orientationY, handles));
                             }
                         }
 
@@ -1329,7 +1874,7 @@ namespace Duplicationer
                                                 handles[i] = placeholderRenderGroup.AddSimplePlaceholderTransform(entry.mesh, transform, BlueprintPlaceholder.stateColours[1]);
                                             }
 
-                                            terrainPlaceholders.Add(new BlueprintPlaceholder(0, blockIndex, repeatIndex, template, template.parentItemTemplate, worldPos, Quaternion.identity, BuildingManager.BuildOrientation.xPos, handles));
+                                            terrainPlaceholders.Add(new BlueprintPlaceholder(0, blockIndex, repeatIndex, template, null, template.parentItemTemplate, worldPos, Quaternion.identity, BuildingManager.BuildOrientation.xPos, handles));
                                         }
                                     }
                                     blockIndex++;

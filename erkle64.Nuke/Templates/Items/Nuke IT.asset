@@ -86,7 +86,7 @@ MonoBehaviour:
   explosionRadius: 10
   dynamite_explosionAABBData: []
   dynamiteDestroyBedrock: 0
-  dynamitePrefab: {fileID: 0}
+  dynamitePrefab: {fileID: 2516978508306176077, guid: 6481f8850871fc64ca885eb4c5c3df88, type: 3}
   dynamite_placementType: 0
   dynamite_explosionType: 0
   dynamite_renderPreviewGo_identifier: 
@@ -94,6 +94,7 @@ MonoBehaviour:
   burnable_fuelValueKJ_str: 
   burnable_residualItemTemplate_str: 
   burnable_residualItemTemplate_count: 0
+  xenoPowerCore_multiplier_str: 1
   salesItem_salesItemCategoryIdentifier: 
   salesItem_industryIdentifier: 
   salesItem_currencyAmount: 0
@@ -126,4 +127,12 @@ MonoBehaviour:
   drillBot_moveSpeedPerSec_str: 
   drillBot_prefab: {fileID: 0}
   drillBot_itemBufferSlotMap: []
+  explorationUnlockInput_sortOrderASC: 0
+  explorationUnlockInput_flavorText: 
+  workstationItem_effect: 0
+  workstationItem_data01: 0
+  workstationItem_data02: 0
+  workstationItem_requiredTags: []
+  workstationItem_excludedTags: []
+  workstationModel: {fileID: 0}
   autoProducerRecipes: []

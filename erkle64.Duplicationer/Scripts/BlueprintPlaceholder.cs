@@ -9,6 +9,7 @@ namespace Duplicationer
         public int Index { get; private set; }
         public Vector3Int RepeatIndex { get; private set; }
         public BuildableObjectTemplate Template { get; private set; }
+        public TrainTrackTemplate TrainTrackTemplate { get; private set; }
         public ItemTemplate ItemTemplate { get; private set; }
         public Vector3 Position { get; private set; }
         public Quaternion Rotation { get; private set; }
@@ -50,12 +51,13 @@ namespace Duplicationer
             null
         };
 
-        public BlueprintPlaceholder(ulong originalEntityId, int index, Vector3Int repeatIndex, BuildableObjectTemplate template, ItemTemplate itemTemplate, Vector3 position, Quaternion rotation, BuildingManager.BuildOrientation orientation, BatchRenderingHandle[] batchRenderingHandles, BoundsInt[] extraBoundingBoxes = null, State state = State.Untested)
+        public BlueprintPlaceholder(ulong originalEntityId, int index, Vector3Int repeatIndex, BuildableObjectTemplate template, TrainTrackTemplate trainTrackTemplate, ItemTemplate itemTemplate, Vector3 position, Quaternion rotation, BuildingManager.BuildOrientation orientation, BatchRenderingHandle[] batchRenderingHandles, BoundsInt[] extraBoundingBoxes = null, State state = State.Untested)
         {
             OriginalEntityId = originalEntityId;
             Index = index;
             RepeatIndex = repeatIndex;
             Template = template;
+            TrainTrackTemplate = trainTrackTemplate;
             ItemTemplate = itemTemplate;
             Position = position;
             Rotation = rotation;

@@ -6,9 +6,10 @@ namespace Duplicationer
 {
     public struct BlueprintData
     {
-        public BlueprintData(int buildingCount, Vector3Int size)
+        public BlueprintData(int buildingCount, int trainTracksCount, Vector3Int size)
         {
             buildableObjects = new BuildableObjectData[buildingCount];
+            trainTracks = new TrainTrackData[trainTracksCount];
             blocks = new BlockData();
         }
 
@@ -122,6 +123,28 @@ namespace Duplicationer
             }
         }
 
+        public struct TrainTrackData
+        {
+            public ulong originalEntityId;
+            public string templateName;
+            public ulong templateId;
+            public int worldX;
+            public int worldY;
+            public int worldZ;
+            public byte orientationY;
+
+            public Vector3Int worldPos
+            {
+                get => new Vector3Int(worldX, worldY, worldZ);
+                set
+                {
+                    worldX = value.x;
+                    worldY = value.y;
+                    worldZ = value.z;
+                }
+            }
+        }
+
         public struct BlockData
         {
             public int sizeX;
@@ -149,6 +172,7 @@ namespace Duplicationer
         }
 
         public BuildableObjectData[] buildableObjects;
+        public TrainTrackData[] trainTracks;
         public BlockData blocks;
 
         public int FindEntityIndex(ulong entityId)

@@ -40,6 +40,7 @@ MonoBehaviour:
   toggleableModes: []
   genericItemActionButtons: []
   tooltipInfoMessage: 
+  altRecipeIdentifier: 
   skipForRunningIdxGeneration: 0
   itemDestroyFlags: 0
   conveyorMesh: {fileID: 0}
@@ -56,6 +57,8 @@ MonoBehaviour:
   handheld_miner_shakeRightArmOnUse: 0
   supportsFocusMode: 0
   handheld_mouseDownModifierFlags: {x: 0, y: 0}
+  handheld_canBeUsedAtBuildingDrone: 0
+  handheld_hideModelAtBuildingDrone: 1
   handheld_defaultPowerPoleItemTemplate_str: 
   miningTimeReductionInSec: 0
   miningRange: 0
@@ -90,6 +93,7 @@ MonoBehaviour:
   railMiner_terrainTargetList_str: []
   isMinecartItem: 0
   material_minecartMaterial: {fileID: 0}
+  trainTracks_tracksSetTemplateIdentifier: 
   trainSignal_templateIdentifier: 
   trainVehicle_templateIdentifier: 
   alStarter_alotIdentifier: 
