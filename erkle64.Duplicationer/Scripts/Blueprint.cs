@@ -564,6 +564,7 @@ namespace Duplicationer
             _iconItemTemplates = iconItemTemplates;
 
             var json = JSON.Dump(_data, EncodeOptions.PrettyPrint | EncodeOptions.NoTypeHints);
+            System.IO.File.WriteAllText(Path.ChangeExtension(path, "json"), json); // for debugging purposes
             var compressed = Compress(json);
             Debug.Log($"Compressed blueprint: {json.Length} -> {compressed.Length}");
 

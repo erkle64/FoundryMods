@@ -5212,7 +5212,7 @@ MonoBehaviour:
   includeBlocks: 1
   includeTerrain: 1
   includeDecor: 1
-  includeTracks: 0
+  includeTracks: 1
   isDestroy: 0
   useDrones: 0
 --- !u!114 &4027993582679649424
@@ -8279,7 +8279,7 @@ MonoBehaviour:
   m_Script: {fileID: 1216277067, guid: 1c83dc1f03b8cf43812e942694488c9e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tooltipText: Toggle cheat mode
+  tooltipText: Clear the blueprint but keep the current selection bounds
   useStaticPOT: 0
   potIdentifier: 
 --- !u!224 &5587172594839609446 stripped

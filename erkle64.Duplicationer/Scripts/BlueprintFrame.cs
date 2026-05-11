@@ -164,8 +164,8 @@ namespace Duplicationer
                 ConfirmationFrame.Show($"Permanently destroy {mode.label} in selection?",
                     () =>
                     {
-                        ApplyDemolishDestroy();
                         isShowingConfirmation = false;
+                        ApplyDemolishDestroy();
                     },
                     () => isShowingConfirmation = false);
             }
@@ -200,6 +200,7 @@ namespace Duplicationer
                     var ignoreSet = new HashSet<ulong>();
                     var repeatFrom = _tool.repeatFrom;
                     var repeatTo = _tool.repeatTo;
+                    List<BlueprintToolCHM.BulkDemolishTerrainDestroyEntry> bulkDemolishEntries = new();
                     for (int y = repeatFrom.y; y <= repeatTo.y; ++y)
                     {
                         for (int z = repeatFrom.z; z <= repeatTo.z; ++z)
@@ -217,7 +218,15 @@ namespace Duplicationer
                                     }
                                     else if (mode.isDestroy)
                                     {
-                                        _tool.DestroyArea(mode.includeTerrain, mode.includeDecor, from, to);
+                                        bulkDemolishEntries.Add(new BlueprintToolCHM.BulkDemolishTerrainDestroyEntry()
+                                        {
+                                            worldPosX = from.x,
+                                            worldPosY = from.y,
+                                            worldPosZ = from.z,
+                                            sizeX = to.x - from.x + 1,
+                                            sizeY = to.y - from.y + 1,
+                                            sizeZ = to.z - from.z + 1,
+                                        });
                                     }
                                     else
                                     {
@@ -226,6 +235,10 @@ namespace Duplicationer
                                 }
                             }
                         }
+                    }
+                    if (mode.isDestroy && bulkDemolishEntries.Count > 0)
+                    {
+                        _tool.DestroyArea(mode.includeTerrain, mode.includeDecor, bulkDemolishEntries);
                     }
                 }
             }

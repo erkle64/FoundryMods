@@ -15,8 +15,7 @@ namespace Duplicationer
         {
             var dsc = new BatteryDataSystemControls();
             DSF_Battery.batteryEntity_modifyDSC(bogo.relatedEntityId, IOBool.iotrue, ref dsc);
-            var dcsData = MessagePackSerializer.Serialize(dsc, GlobalStateManager.msgp_options_fast);
-            customData.Add("dcsData", Convert.ToBase64String(dcsData));
+            customData.Add("dcsDataStr", SerializeDCSData(dsc));
         }
     }
 
@@ -26,8 +25,7 @@ namespace Duplicationer
         {
             var dsc = new BurnerGeneratorDataSystemControls();
             DSF_BurnerGenerator.burnerGeneratorEntity_modifyDSC(bogo.relatedEntityId, IOBool.iotrue, ref dsc);
-            var dcsData = MessagePackSerializer.Serialize(dsc, GlobalStateManager.msgp_options_fast);
-            customData.Add("dcsData", Convert.ToBase64String(dcsData));
+            customData.Add("dcsDataStr", SerializeDCSData(dsc));
         }
     }
 
@@ -37,8 +35,7 @@ namespace Duplicationer
         {
             var dsc = new ConveyorDataSystemControls();
             DSF_Conveyor.conveyorEntity_modifyDSC(bogo.relatedEntityId, IOBool.iotrue, ref dsc);
-            var dcsData = MessagePackSerializer.Serialize(dsc, GlobalStateManager.msgp_options_fast);
-            customData.Add("dcsData", Convert.ToBase64String(dcsData));
+            customData.Add("dcsDataStr", SerializeDCSData(dsc));
         }
     }
 
@@ -48,8 +45,7 @@ namespace Duplicationer
         {
             var dsc = new DataCompareEntityDataSystemControls();
             DSF_DataCompare.dataCompareEntity_modifyDSC(bogo.relatedEntityId, IOBool.iotrue, ref dsc);
-            var dcsData = MessagePackSerializer.Serialize(dsc, GlobalStateManager.msgp_options_fast);
-            customData.Add("dcsData", Convert.ToBase64String(dcsData));
+            customData.Add("dcsDataStr", SerializeDCSData(dsc));
         }
     }
 
@@ -61,6 +57,7 @@ namespace Duplicationer
             DSF_DataProcessor.dataProcessorEntity_modifyDSC(bogo.relatedEntityId, IOBool.iotrue, ref dsc);
             var dcsData = JSON.Dump(dsc, EncodeOptions.NoTypeHints);
             customData.Add("dcsData", dcsData);
+            customData.Add("dcsDataStr", SerializeDCSData(dsc));
         }
     }
 
@@ -70,8 +67,7 @@ namespace Duplicationer
         {
             var dsc = new DataMemoryEntityDataSystemControls();
             DSF_DataMemory.dataMemoryEntity_modifyDSC(bogo.relatedEntityId, IOBool.iotrue, ref dsc);
-            var dcsData = MessagePackSerializer.Serialize(dsc, GlobalStateManager.msgp_options_fast);
-            customData.Add("dcsData", Convert.ToBase64String(dcsData));
+            customData.Add("dcsDataStr", SerializeDCSData(dsc));
         }
     }
 
@@ -103,8 +99,7 @@ namespace Duplicationer
                 dataConfigArrays[DSF_DataSource.MAX_SLOTS + i] = dataSource_signalValueArray[i];
             }
             dataConfigArrays[DSF_DataSource.MAX_SLOTS * 2] = dataSource_broadcastState ? 1 : 0;
-            var dcsData = MessagePackSerializer.Serialize(dataConfigArrays, GlobalStateManager.msgp_options_fast);
-            customData.Add("dcsData", Convert.ToBase64String(dcsData));
+            customData.Add("dcsDataStrArray", SerializeDCSDataArray(dataConfigArrays, DSF_DataSource.MAX_SLOTS));
         }
     }
 
@@ -114,8 +109,7 @@ namespace Duplicationer
         {
             var dsc = new DoorDataSystemControls();
             DSF_Door.doorEntity_modifyDSC(bogo.relatedEntityId, IOBool.iotrue, ref dsc);
-            var dcsData = MessagePackSerializer.Serialize(dsc, GlobalStateManager.msgp_options_fast);
-            customData.Add("dcsData", Convert.ToBase64String(dcsData));
+            customData.Add("dcsDataStr", SerializeDCSData(dsc));
         }
     }
 
@@ -125,8 +119,7 @@ namespace Duplicationer
         {
             var dsc = new DroneMinerDataSystemControls();
             DSF_DroneMiner.droneEntity_modifyDSC(bogo.relatedEntityId, IOBool.iotrue, ref dsc);
-            var dcsData = MessagePackSerializer.Serialize(dsc, GlobalStateManager.msgp_options_fast);
-            customData.Add("dcsData", Convert.ToBase64String(dcsData));
+            customData.Add("dcsDataStr", SerializeDCSData(dsc));
         }
     }
 
@@ -136,8 +129,7 @@ namespace Duplicationer
         {
             var dsc = new LightDataSystemControls();
             DSF_Light.lightEntity_modifyDSC(bogo.relatedEntityId, IOBool.iotrue, ref dsc);
-            var dcsData = MessagePackSerializer.Serialize(dsc, GlobalStateManager.msgp_options_fast);
-            customData.Add("dcsData", Convert.ToBase64String(dcsData));
+            customData.Add("dcsDataStr", SerializeDCSData(dsc));
         }
     }
 
@@ -147,8 +139,7 @@ namespace Duplicationer
         {
             var dsc = new LvgGeneratorDataSystemControls();
             DSF_LvgGenerator.lvgGeneratorEntity_modifyDSC(bogo.relatedEntityId, IOBool.iotrue, ref dsc);
-            var dcsData = MessagePackSerializer.Serialize(dsc, GlobalStateManager.msgp_options_fast);
-            customData.Add("dcsData", Convert.ToBase64String(dcsData));
+            customData.Add("dcsDataStr", SerializeDCSData(dsc));
         }
     }
 
@@ -158,8 +149,7 @@ namespace Duplicationer
         {
             var dsc = new PumpDataSystemControls();
             DSF_Pump.pumpEntity_modifyDSC(bogo.relatedEntityId, IOBool.iotrue, ref dsc);
-            var dcsData = MessagePackSerializer.Serialize(dsc, GlobalStateManager.msgp_options_fast);
-            customData.Add("dcsData", Convert.ToBase64String(dcsData));
+            customData.Add("dcsDataStr", SerializeDCSData(dsc));
         }
     }
 
@@ -169,8 +159,7 @@ namespace Duplicationer
         {
             var dsc = new PumpjackDataSystemControls();
             DSF_Pumpjack.pumpjackEntity_modifyDSC(bogo.relatedEntityId, IOBool.iotrue, ref dsc);
-            var dcsData = MessagePackSerializer.Serialize(dsc, GlobalStateManager.msgp_options_fast);
-            customData.Add("dcsData", Convert.ToBase64String(dcsData));
+            customData.Add("dcsDataStr", SerializeDCSData(dsc));
         }
     }
 
@@ -180,8 +169,7 @@ namespace Duplicationer
         {
             var dsc = new SolarPanelDataSystemControls();
             DSF_SolarPanel.solarPanelEntity_modifyDSC(bogo.relatedEntityId, IOBool.iotrue, ref dsc);
-            var dcsData = MessagePackSerializer.Serialize(dsc, GlobalStateManager.msgp_options_fast);
-            customData.Add("dcsData", Convert.ToBase64String(dcsData));
+            customData.Add("dcsDataStr", SerializeDCSData(dsc));
         }
     }
 
@@ -191,8 +179,7 @@ namespace Duplicationer
         {
             var dsc = new TransformerDataSystemControls();
             DSF_Transformer.transformerEntity_modifyDSC(bogo.relatedEntityId, IOBool.iotrue, ref dsc);
-            var dcsData = MessagePackSerializer.Serialize(dsc, GlobalStateManager.msgp_options_fast);
-            customData.Add("dcsData", Convert.ToBase64String(dcsData));
+            customData.Add("dcsDataStr", SerializeDCSData(dsc));
         }
     }
 
@@ -205,8 +192,7 @@ namespace Duplicationer
 
             var dsc = new ProducerDataSystemControls();
             DSF_Producer.producerEntity_modifyDSC(bogo.relatedEntityId, IOBool.iotrue, ref dsc);
-            var dcsData = MessagePackSerializer.Serialize(dsc, GlobalStateManager.msgp_options_fast);
-            customData.Add("dcsData", Convert.ToBase64String(dcsData));
+            customData.Add("dcsDataStr", SerializeDCSData(dsc));
         }
     }
 
@@ -223,8 +209,7 @@ namespace Duplicationer
 
             var dsc = new LoaderDataSystemControls();
             DSF_Loader.loaderEntity_modifyDSC(bogo.relatedEntityId, IOBool.iotrue, ref dsc);
-            var dcsData = MessagePackSerializer.Serialize(dsc, GlobalStateManager.msgp_options_fast);
-            customData.Add("dcsData", Convert.ToBase64String(dcsData));
+            customData.Add("dcsDataStr", SerializeDCSData(dsc));
         }
     }
 
@@ -562,8 +547,7 @@ namespace Duplicationer
 
             TrainStationDataSystemControls dsc = default;
             DSF_TrainStation.trainStationEntity_modifyDSC(bogo.relatedEntityId, IOBool.iotrue, ref dsc);
-            var dcsData = MessagePackSerializer.Serialize(dsc, GlobalStateManager.msgp_options_fast);
-            customData.Add("dcsData", Convert.ToBase64String(dcsData));
+            customData.Add("dcsDataStr", SerializeDCSData(dsc));
         }
     }
 
@@ -588,8 +572,7 @@ namespace Duplicationer
 
             TrainLoadingStationDataSystemControls dsc = default;
             DSF_TrainLoadingStation.trainLoadingStationEntity_modifyDSC(bogo.relatedEntityId, IOBool.iotrue, ref dsc);
-            var dcsData = MessagePackSerializer.Serialize(dsc, GlobalStateManager.msgp_options_fast);
-            customData.Add("dcsData", Convert.ToBase64String(dcsData));
+            customData.Add("dcsDataStr", SerializeDCSData(dsc));
         }
     }
 }

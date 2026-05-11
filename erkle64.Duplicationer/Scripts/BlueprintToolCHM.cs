@@ -121,8 +121,8 @@ namespace Duplicationer
         {
             var material = new Material(ResourceDB.material_placeholder_green);
             material.renderQueue = 3001;
-            material.SetFloat("_Opacity", 0.25f);
-            material.SetColor("_Color", new Color(0.0f, 0.0f, 1.0f, 0.25f));
+            material.SetFloat("_Opacity", 0.1f);
+            material.SetColor("_Color", new Color(0.0f, 0.0f, 1.0f, 0.1f));
             return material;
         });
 
@@ -1119,7 +1119,7 @@ namespace Duplicationer
         }
 
         [System.Serializable]
-        private struct BulkDemolishTerrainDestroyRequest
+        public struct BulkDemolishTerrainDestroyEntry
         {
             public int worldPosX;
             public int worldPosY;
@@ -1127,19 +1127,20 @@ namespace Duplicationer
             public int sizeX;
             public int sizeY;
             public int sizeZ;
+        }
+
+        [System.Serializable]
+        private struct BulkDemolishTerrainDestroyRequest
+        {
+            public BulkDemolishTerrainDestroyEntry[] entries;
             public bool destroyTerrain;
             public bool destroyDecor;
         }
-        internal void DestroyArea(bool doTerrain, bool doDecor, Vector3Int from, Vector3Int to)
+        internal void DestroyArea(bool doTerrain, bool doDecor, IEnumerable<BulkDemolishTerrainDestroyEntry> entries)
         {
             Messenger.Send("BulkDemolishTerrain_Destroy", new BulkDemolishTerrainDestroyRequest
             {
-                worldPosX = from.x,
-                worldPosY = from.y,
-                worldPosZ = from.z,
-                sizeX = to.x - from.x + 1,
-                sizeY = to.y - from.y + 1,
-                sizeZ = to.z - from.z + 1,
+                entries = entries.ToArray(),
                 destroyTerrain = doTerrain,
                 destroyDecor = doDecor
             });
@@ -1149,7 +1150,14 @@ namespace Duplicationer
         {
             if (TryGetSelectedArea(out Vector3Int from, out Vector3Int to))
             {
-                DestroyArea(doTerrain, doDecor, from, to);
+                DestroyArea(doTerrain, doDecor, new BulkDemolishTerrainDestroyEntry[] { new BulkDemolishTerrainDestroyEntry() {
+                    worldPosX = from.x,
+                    worldPosY = from.y,
+                    worldPosZ = from.z,
+                    sizeX = to.x - from.x + 1,
+                    sizeY = to.y - from.y + 1,
+                    sizeZ = to.z - from.z + 1
+                }});
             }
         }
 

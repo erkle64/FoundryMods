@@ -78,7 +78,7 @@ namespace Duplicationer
     public class CDA_DCSData : CustomDataApplier
     {
         public override bool ShouldApply(BuildableObjectTemplate bot, CustomDataWrapper customData)
-            => customData.HasCustomData("dcsData");
+            => customData.HasCustomData("dcsData") || customData.HasCustomData("dcsDataStr") || customData.HasCustomData("dcsDataStrArray");
 
         public override void Apply(
             BuildableObjectTemplate bot,
@@ -95,6 +95,76 @@ namespace Duplicationer
             Dictionary<ulong, ulong> entityIdMap)
         {
             usePasteConfigSettings = true;
+
+            if (customData.HasCustomData("dcsDataStrArray"))
+            {
+                var dcsDataStr = customData.GetCustomData<string>("dcsDataStrArray");
+                var parts = dcsDataStr.Split("|");
+                int[] dcsDataValues = new int[parts.Length];
+                var idCount = parts.Length / 2;
+                bool parsingFailed = false;
+                for (int i = 0; i < idCount; i++)
+                {
+                    if (parts[i] == "0")
+                    {
+                        dcsDataValues[i] = int.MaxValue;
+                        continue;
+                    }
+
+                    if (ulong.TryParse(parts[i], out var id) == false)
+                    {
+                        UnityEngine.Debug.LogWarning("Failed to parse dcsDataStrArray, falling back to dcsData");
+                        parsingFailed = true;
+                        break;
+                    }
+
+                    var dst = ItemTemplateManager.getDataSignalTemplate(id);
+                    var et = ItemTemplateManager.getElementTemplate(id);
+                    var it = ItemTemplateManager.getItemTemplate(id);
+                    if (dst != null)
+                    {
+                        dcsDataValues[i] = dst.getRunningIdx();
+                    }
+                    else if (et != null)
+                    {
+                        dcsDataValues[i] = et.getRunningIdx();
+                    }
+                    else if (it != null)
+                    {
+                        dcsDataValues[i] = it.getRunningIdx();
+                    }
+                    else
+                    {
+                        UnityEngine.Debug.LogWarning("Failed to find template for id in dcsDataStrArray, falling back to dcsData");
+                        parsingFailed = true;
+                        break;
+                    }
+                }
+                for (int i = idCount; i < parts.Length; i++)
+                {
+                    if (int.TryParse(parts[i], out var value) == false)
+                    {
+                        UnityEngine.Debug.LogWarning("Failed to parse dcsDataStrArray, falling back to dcsData");
+                        parsingFailed = true;
+                        break;
+                    }
+                    dcsDataValues[i] = value;
+                }
+                if (!parsingFailed)
+                {
+                    dcsData = MessagePackSerializer.Serialize(dcsDataValues, GlobalStateManager.msgp_options_fast);
+                    return;
+                }
+            }
+
+            if (customData.HasCustomData("dcsDataStr"))
+            {
+                dcsData = TranslateDCSData(customData.GetCustomData<string>("dcsDataStr"));
+                if (dcsData != null)
+                    return;
+
+                UnityEngine.Debug.LogWarning("Failed to translate dcsDataStr, falling back to dcsData");
+            }
 
             var loader_dsc = customData.GetCustomData<string>("dcsData");
             if (loader_dsc != null)

@@ -22,8 +22,6 @@ namespace BulkDemolishTerrain
         private static List<bool> isOre = null;
         private static int bedrockByteIdx = 0;
 
-        private static bool _confirmationFrameOpen = false;
-
         private static CustomRadialMenuStateControl _radialMenuStateControl = null;
 
         public enum TerrainMode
@@ -100,7 +98,7 @@ namespace BulkDemolishTerrain
         }
 
         [Serializable]
-        private struct BulkDemolishTerrainDestroyRequest
+        private struct BulkDemolishTerrainDestroyEntry
         {
             public int worldPosX;
             public int worldPosY;
@@ -108,19 +106,26 @@ namespace BulkDemolishTerrain
             public int sizeX;
             public int sizeY;
             public int sizeZ;
+        }
+
+        [Serializable]
+        private struct BulkDemolishTerrainDestroyRequest
+        {
+            public BulkDemolishTerrainDestroyEntry[] entries;
             public bool destroyTerrain;
             public bool destroyDecor;
         }
+
         private void ApplyDestroyTerrainRequest(BulkDemolishTerrainDestroyRequest request)
         {
-            RunDemolition(
-                new Vector3Int(request.worldPosX, request.worldPosY, request.worldPosZ),
-                new Vector3Int(request.sizeX, request.sizeY, request.sizeZ),
-                true,
-                request.destroyTerrain,
-                request.destroyDecor,
-                Config.General.removeLiquids.value && request.destroyTerrain
-            );
+            ActionManager.AddQueuedEvent(() =>
+                RunDemolition(
+                    request.entries,
+                    true,
+                    request.destroyTerrain,
+                    request.destroyDecor,
+                    Config.General.removeLiquids.value && request.destroyTerrain)
+                );
         }
 
         private void OnPlayerPlacedOnlyChanged(bool value)
@@ -226,7 +231,7 @@ namespace BulkDemolishTerrain
             CustomRadialMenuSystem.Instance.ShowMenu(_radialMenuStateControl.GetMenuOptions());
         }
 
-        private static void RunDemolition(Vector3Int pos, Vector3Int size, bool useDestroyMode, bool demolishTerrain, bool demolishDecor, bool demolishLiquids)
+        private static void RunDemolition(BulkDemolishTerrainDestroyEntry[] destroyEntries, bool useDestroyMode, bool demolishTerrain, bool demolishDecor, bool demolishLiquids)
         {
             var clientCharacter = GameRoot.getClientCharacter();
             if (clientCharacter == null) return;
@@ -240,26 +245,41 @@ namespace BulkDemolishTerrain
                 if (bedrockByteIdx == 0)
                 {
                     bedrockByteIdx = GameRoot.TerrainIdxLookupTable.getKeyByValue(TerrainBlockType.generateStringHash("_base_bedrock"));
-                    log.Log($"Bedrock Byte Index: {bedrockByteIdx}");
                 }
 
-                if (pos.y < 1)
+                for (int i = 0; i < destroyEntries.Length; i++)
                 {
-                    size.y += pos.y - 1;
-                    pos.y = 1;
+                    BulkDemolishTerrainDestroyEntry entry = destroyEntries[i];
+                    if (entry.worldPosY < 1)
+                    {
+                        entry.sizeY += entry.worldPosY - 1;
+                        entry.worldPosY = 1;
+                        destroyEntries[i] = entry;
+                    }
                 }
             }
             else
             {
-                if (pos.y < 2)
+                for (int i = 0; i < destroyEntries.Length; i++)
                 {
-                    size.y += pos.y - 2;
-                    pos.y = 2;
+                    BulkDemolishTerrainDestroyEntry entry = destroyEntries[i];
+                    if (entry.worldPosY < 2)
+                    {
+                        entry.sizeY += entry.worldPosY - 2;
+                        entry.worldPosY = 2;
+                        destroyEntries[i] = entry;
+                    }
                 }
             }
-            if (pos.y + size.y >= Chunk.CHUNKSIZE_Y)
+
+            for (int i = 0; i < destroyEntries.Length; i++)
             {
-                size.y = Chunk.CHUNKSIZE_Y - pos.y;
+                BulkDemolishTerrainDestroyEntry entry = destroyEntries[i];
+                if (entry.worldPosY + entry.sizeY >= Chunk.CHUNKSIZE_Y)
+                {
+                    entry.sizeY = Chunk.CHUNKSIZE_Y - entry.worldPosY - 1;
+                    destroyEntries[i] = entry;
+                }
             }
 
             if (demolishTerrain || demolishDecor)
@@ -267,22 +287,27 @@ namespace BulkDemolishTerrain
                 GenerateShouldRemoveArray(false);
                 GenerateIsOreArray();
 
-                AABB3D aabb = new(pos.x, pos.y, pos.z, size.x, size.y, size.z);
                 if (demolishDecor)
                 {
-                    using (var query = StreamingSystem.get().queryAABB3D(aabb))
+                    foreach (var entry in destroyEntries)
                     {
-                        foreach (var bogo in query)
+                        var pos = new Vector3Int(entry.worldPosX, entry.worldPosY, entry.worldPosZ);
+                        var size = new Vector3Int(entry.sizeX, entry.sizeY, entry.sizeZ);
+                        AABB3D aabb = new(pos.x, pos.y, pos.z, size.x, size.y, size.z);
+                        using (var query = StreamingSystem.get().queryAABB3D(aabb))
                         {
-                            if (bogo.template.type == BuildableObjectTemplate.BuildableObjectType.WorldDecorMineAble)
+                            foreach (var bogo in query)
                             {
-                                if (useDestroyMode)
+                                if (bogo.template.type == BuildableObjectTemplate.BuildableObjectType.WorldDecorMineAble)
                                 {
-                                    ActionManager.AddQueuedEvent(() => Rpc.Lockstep.Run(DestroyBuildingRPC, bogo.relatedEntityId));
-                                }
-                                else
-                                {
-                                    ActionManager.AddQueuedEvent(() => GameRoot.addLockstepEvent(new Character.RemoveWorldDecorEvent(characterHash, bogo.relatedEntityId, 0)));
+                                    if (useDestroyMode)
+                                    {
+                                        ActionManager.AddQueuedEvent(() => Rpc.Lockstep.Run(DestroyBuildingRPC, bogo.relatedEntityId));
+                                    }
+                                    else
+                                    {
+                                        ActionManager.AddQueuedEvent(() => GameRoot.addLockstepEvent(new Character.RemoveWorldDecorEvent(characterHash, bogo.relatedEntityId, 0)));
+                                    }
                                 }
                             }
                         }
@@ -291,53 +316,58 @@ namespace BulkDemolishTerrain
 
                 if (demolishTerrain)
                 {
-                    ChunkManager.getChunkCoordsFromWorldCoords(pos.x, pos.z, out var fromChunkX, out var fromChunkZ);
-                    ChunkManager.getChunkCoordsFromWorldCoords(pos.x + size.x - 1, pos.z + size.z - 1, out var toChunkX, out var toChunkZ);
                     var hasOre = false;
                     var hasNonOre = false;
-                    for (var chunkZ = fromChunkZ; chunkZ <= toChunkZ; chunkZ++)
+                    foreach (var entry in destroyEntries)
                     {
-                        for (var chunkX = fromChunkX; chunkX <= toChunkX; chunkX++)
+                        var pos = new Vector3Int(entry.worldPosX, entry.worldPosY, entry.worldPosZ);
+                        var size = new Vector3Int(entry.sizeX, entry.sizeY, entry.sizeZ);
+                        ChunkManager.getChunkCoordsFromWorldCoords(pos.x, pos.z, out var fromChunkX, out var fromChunkZ);
+                        ChunkManager.getChunkCoordsFromWorldCoords(pos.x + size.x - 1, pos.z + size.z - 1, out var toChunkX, out var toChunkZ);
+                        for (var chunkZ = fromChunkZ; chunkZ <= toChunkZ; chunkZ++)
                         {
-                            var chunkFromX = chunkX * Chunk.CHUNKSIZE_XZ;
-                            var chunkFromZ = chunkZ * Chunk.CHUNKSIZE_XZ;
-                            var chunkToX = chunkFromX + Chunk.CHUNKSIZE_XZ - 1;
-                            var chunkToZ = chunkFromZ + Chunk.CHUNKSIZE_XZ - 1;
-                            var fromX = Mathf.Max(pos.x, chunkFromX);
-                            var fromZ = Mathf.Max(pos.z, chunkFromZ);
-                            var toX = Mathf.Min(pos.x + size.x - 1, chunkToX);
-                            var toZ = Mathf.Min(pos.z + size.z - 1, chunkToZ);
-
-                            for (int z = fromZ; z <= toZ; ++z)
+                            for (var chunkX = fromChunkX; chunkX <= toChunkX; chunkX++)
                             {
-                                for (int y = 0; y < size.y; ++y)
+                                var chunkFromX = chunkX * Chunk.CHUNKSIZE_XZ;
+                                var chunkFromZ = chunkZ * Chunk.CHUNKSIZE_XZ;
+                                var chunkToX = chunkFromX + Chunk.CHUNKSIZE_XZ - 1;
+                                var chunkToZ = chunkFromZ + Chunk.CHUNKSIZE_XZ - 1;
+                                var fromX = Mathf.Max(pos.x, chunkFromX);
+                                var fromZ = Mathf.Max(pos.z, chunkFromZ);
+                                var toX = Mathf.Min(pos.x + size.x - 1, chunkToX);
+                                var toZ = Mathf.Min(pos.z + size.z - 1, chunkToZ);
+
+                                for (int z = fromZ; z <= toZ; ++z)
                                 {
-                                    for (int x = fromX; x <= toX; ++x)
+                                    for (int y = 0; y < size.y; ++y)
                                     {
-                                        var coords = new Vector3Int(x, pos.y + y, z);
-                                        var terrainData = ChunkManager.getTerrainDataForWorldCoord(coords, out Chunk _, out uint _);
-                                        if (removeBedrock && terrainData == bedrockByteIdx)
+                                        for (int x = fromX; x <= toX; ++x)
                                         {
-                                            ActionManager.AddQueuedEvent(() => _queuedTerrainRemovals.Enqueue(coords));
-                                        }
-                                        else if (terrainData < shouldRemove.Count && shouldRemove[terrainData])
-                                        {
-                                            if (useDestroyMode)
+                                            var coords = new Vector3Int(x, pos.y + y, z);
+                                            var terrainData = ChunkManager.getTerrainDataForWorldCoord(coords, out Chunk _, out uint _);
+                                            if (removeBedrock && terrainData == bedrockByteIdx)
                                             {
                                                 ActionManager.AddQueuedEvent(() => _queuedTerrainRemovals.Enqueue(coords));
                                             }
-                                            else
+                                            else if (terrainData < shouldRemove.Count && shouldRemove[terrainData])
                                             {
-                                                ActionManager.AddQueuedEvent(() => GameRoot.addLockstepEvent(new Character.RemoveTerrainEvent(characterHash, coords, 0, false)));
+                                                if (useDestroyMode)
+                                                {
+                                                    ActionManager.AddQueuedEvent(() => _queuedTerrainRemovals.Enqueue(coords));
+                                                }
+                                                else
+                                                {
+                                                    ActionManager.AddQueuedEvent(() => GameRoot.addLockstepEvent(new Character.RemoveTerrainEvent(characterHash, coords, 0, false)));
+                                                }
                                             }
-                                        }
-                                        if (terrainData < isOre.Count && isOre[terrainData])
-                                        {
-                                            hasOre = true;
-                                        }
-                                        else if (terrainData > 1)
-                                        {
-                                            hasNonOre = true;
+                                            if (terrainData < isOre.Count && isOre[terrainData])
+                                            {
+                                                hasOre = true;
+                                            }
+                                            else if (terrainData > 1)
+                                            {
+                                                hasNonOre = true;
+                                            }
                                         }
                                     }
                                 }
@@ -345,48 +375,47 @@ namespace BulkDemolishTerrain
                         }
                     }
 
-                    if (!_confirmationFrameOpen && useDestroyMode && !hasNonOre && hasOre)
+                    if (useDestroyMode && !hasNonOre && hasOre)
                     {
-                        _confirmationFrameOpen = true;
-                        GlobalStateManager.addCursorRequirement();
                         ConfirmationFrame.Show("Destroy ore blocks?", () =>
                         {
-                            GlobalStateManager.removeCursorRequirement();
-                            for (var chunkZ = fromChunkZ; chunkZ <= toChunkZ; chunkZ++)
+                            foreach (var entry in destroyEntries)
                             {
-                                for (var chunkX = fromChunkX; chunkX <= toChunkX; chunkX++)
+                                var pos = new Vector3Int(entry.worldPosX, entry.worldPosY, entry.worldPosZ);
+                                var size = new Vector3Int(entry.sizeX, entry.sizeY, entry.sizeZ);
+                                ChunkManager.getChunkCoordsFromWorldCoords(pos.x, pos.z, out var fromChunkX, out var fromChunkZ);
+                                ChunkManager.getChunkCoordsFromWorldCoords(pos.x + size.x - 1, pos.z + size.z - 1, out var toChunkX, out var toChunkZ);
+                                for (var chunkZ = fromChunkZ; chunkZ <= toChunkZ; chunkZ++)
                                 {
-                                    var chunkFromX = chunkX * Chunk.CHUNKSIZE_XZ;
-                                    var chunkFromZ = chunkZ * Chunk.CHUNKSIZE_XZ;
-                                    var chunkToX = chunkFromX + Chunk.CHUNKSIZE_XZ - 1;
-                                    var chunkToZ = chunkFromZ + Chunk.CHUNKSIZE_XZ - 1;
-                                    var fromX = Mathf.Max(pos.x, chunkFromX);
-                                    var fromZ = Mathf.Max(pos.z, chunkFromZ);
-                                    var toX = Mathf.Min(pos.x + size.x - 1, chunkToX);
-                                    var toZ = Mathf.Min(pos.z + size.z - 1, chunkToZ);
-
-                                    for (int z = fromZ; z <= toZ; ++z)
+                                    for (var chunkX = fromChunkX; chunkX <= toChunkX; chunkX++)
                                     {
-                                        for (int y = 0; y < size.y; ++y)
+                                        var chunkFromX = chunkX * Chunk.CHUNKSIZE_XZ;
+                                        var chunkFromZ = chunkZ * Chunk.CHUNKSIZE_XZ;
+                                        var chunkToX = chunkFromX + Chunk.CHUNKSIZE_XZ - 1;
+                                        var chunkToZ = chunkFromZ + Chunk.CHUNKSIZE_XZ - 1;
+                                        var fromX = Mathf.Max(pos.x, chunkFromX);
+                                        var fromZ = Mathf.Max(pos.z, chunkFromZ);
+                                        var toX = Mathf.Min(pos.x + size.x - 1, chunkToX);
+                                        var toZ = Mathf.Min(pos.z + size.z - 1, chunkToZ);
+
+                                        for (int z = fromZ; z <= toZ; ++z)
                                         {
-                                            for (int x = fromX; x <= toX; ++x)
+                                            for (int y = 0; y < size.y; ++y)
                                             {
-                                                var coords = new Vector3Int(x, pos.y + y, z);
-                                                var terrainData = ChunkManager.getTerrainDataForWorldCoord(coords, out Chunk _, out uint _);
-                                                if (terrainData < isOre.Count && isOre[terrainData])
+                                                for (int x = fromX; x <= toX; ++x)
                                                 {
-                                                    ActionManager.AddQueuedEvent(() => _queuedTerrainRemovals.Enqueue(coords));
+                                                    var coords = new Vector3Int(x, pos.y + y, z);
+                                                    var terrainData = ChunkManager.getTerrainDataForWorldCoord(coords, out Chunk _, out uint _);
+                                                    if (terrainData < isOre.Count && isOre[terrainData])
+                                                    {
+                                                        ActionManager.AddQueuedEvent(() => _queuedTerrainRemovals.Enqueue(coords));
+                                                    }
                                                 }
                                             }
                                         }
                                     }
                                 }
                             }
-                            _confirmationFrameOpen = false;
-                        }, () =>
-                        {
-                            GlobalStateManager.removeCursorRequirement();
-                            _confirmationFrameOpen = false;
                         });
                     }
                 }
@@ -397,44 +426,49 @@ namespace BulkDemolishTerrain
                 ActionManager.AddQueuedEvent(() =>
                 {
                     var liquidSystem = GameRoot.World.Systems.Get<LiquidSystem>();
-                    ChunkManager.getChunkCoordsFromWorldCoords(pos.x, pos.z, out var fromChunkX, out var fromChunkZ);
-                    ChunkManager.getChunkCoordsFromWorldCoords(pos.x + size.x - 1, pos.z + size.z - 1, out var toChunkX, out var toChunkZ);
-                    for (var chunkZ = fromChunkZ; chunkZ <= toChunkZ; chunkZ++)
+                    foreach (var entry in destroyEntries)
                     {
-                        for (var chunkX = fromChunkX; chunkX <= toChunkX; chunkX++)
+                        var pos = new Vector3Int(entry.worldPosX, entry.worldPosY, entry.worldPosZ);
+                        var size = new Vector3Int(entry.sizeX, entry.sizeY, entry.sizeZ);
+                        ChunkManager.getChunkCoordsFromWorldCoords(pos.x, pos.z, out var fromChunkX, out var fromChunkZ);
+                        ChunkManager.getChunkCoordsFromWorldCoords(pos.x + size.x - 1, pos.z + size.z - 1, out var toChunkX, out var toChunkZ);
+                        for (var chunkZ = fromChunkZ; chunkZ <= toChunkZ; chunkZ++)
                         {
-                            var chunkFromX = chunkX * Chunk.CHUNKSIZE_XZ;
-                            var chunkFromZ = chunkZ * Chunk.CHUNKSIZE_XZ;
-                            var chunkToX = chunkFromX + Chunk.CHUNKSIZE_XZ - 1;
-                            var chunkToZ = chunkFromZ + Chunk.CHUNKSIZE_XZ - 1;
-                            var fromX = Mathf.Max(pos.x, chunkFromX);
-                            var fromZ = Mathf.Max(pos.z, chunkFromZ);
-                            var toX = Mathf.Min(pos.x + size.x - 1, chunkToX);
-                            var toZ = Mathf.Min(pos.z + size.z - 1, chunkToZ);
-
-                            var chunkIndex = ChunkManager.calculateChunkIdx(chunkX, chunkZ);
-                            byte[] liquidAmounts = null;
-                            if (liquidSystem.tryGetLiquidChunk(chunkIndex, out var liquidChunk))
+                            for (var chunkX = fromChunkX; chunkX <= toChunkX; chunkX++)
                             {
-                                liquidChunk.getDecompressedArrays(out var _, out liquidAmounts);
-                            }
+                                var chunkFromX = chunkX * Chunk.CHUNKSIZE_XZ;
+                                var chunkFromZ = chunkZ * Chunk.CHUNKSIZE_XZ;
+                                var chunkToX = chunkFromX + Chunk.CHUNKSIZE_XZ - 1;
+                                var chunkToZ = chunkFromZ + Chunk.CHUNKSIZE_XZ - 1;
+                                var fromX = Mathf.Max(pos.x, chunkFromX);
+                                var fromZ = Mathf.Max(pos.z, chunkFromZ);
+                                var toX = Mathf.Min(pos.x + size.x - 1, chunkToX);
+                                var toZ = Mathf.Min(pos.z + size.z - 1, chunkToZ);
 
-                            for (int z = fromZ; z <= toZ; ++z)
-                            {
-                                for (int y = 0; y < size.y; ++y)
+                                var chunkIndex = ChunkManager.calculateChunkIdx(chunkX, chunkZ);
+                                byte[] liquidAmounts = null;
+                                if (liquidSystem.tryGetLiquidChunk(chunkIndex, out var liquidChunk))
                                 {
-                                    for (int x = fromX; x <= toX; ++x)
+                                    liquidChunk.getDecompressedArrays(out var _, out liquidAmounts);
+                                }
+
+                                for (int z = fromZ; z <= toZ; ++z)
+                                {
+                                    for (int y = 0; y < size.y; ++y)
                                     {
-                                        var coords = new Vector3Int(x, pos.y + y, z);
-                                        if (liquidAmounts != null)
+                                        for (int x = fromX; x <= toX; ++x)
                                         {
-                                            var tx = (uint)(coords.x - chunkX * Chunk.CHUNKSIZE_XZ);
-                                            var ty = (uint)coords.y;
-                                            var tz = (uint)(coords.z - chunkZ * Chunk.CHUNKSIZE_XZ);
-                                            var terrainIndex = Chunk.getTerrainArrayIdx(tx, ty, tz);
-                                            if (liquidAmounts[terrainIndex] > 0)
+                                            var coords = new Vector3Int(x, pos.y + y, z);
+                                            if (liquidAmounts != null)
                                             {
-                                                GameRoot.addLockstepEvent(new SetLiquidCellEvent(coords.x, coords.y, coords.z, 0, 0));
+                                                var tx = (uint)(coords.x - chunkX * Chunk.CHUNKSIZE_XZ);
+                                                var ty = (uint)coords.y;
+                                                var tz = (uint)(coords.z - chunkZ * Chunk.CHUNKSIZE_XZ);
+                                                var terrainIndex = Chunk.getTerrainArrayIdx(tx, ty, tz);
+                                                if (liquidAmounts[terrainIndex] > 0)
+                                                {
+                                                    GameRoot.addLockstepEvent(new SetLiquidCellEvent(coords.x, coords.y, coords.z, 0, 0));
+                                                }
                                             }
                                         }
                                     }
@@ -622,9 +656,8 @@ namespace BulkDemolishTerrain
                         }
                     }
 
-                    if (!_confirmationFrameOpen && useDestroyMode && !hasNonOre && hasOre)
+                    if (useDestroyMode && !hasNonOre && hasOre)
                     {
-                        _confirmationFrameOpen = true;
                         GlobalStateManager.addCursorRequirement();
                         ConfirmationFrame.Show("Destroy ore blocks?", () =>
                         {
@@ -659,11 +692,10 @@ namespace BulkDemolishTerrain
                                     }
                                 }
                             }
-                            _confirmationFrameOpen = false;
-                        }, () =>
+                        },
+                        () =>
                         {
                             GlobalStateManager.removeCursorRequirement();
-                            _confirmationFrameOpen = false;
                         });
                     }
                 }
