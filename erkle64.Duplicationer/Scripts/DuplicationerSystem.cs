@@ -17,7 +17,7 @@ namespace Duplicationer
 
         private BlueprintToolCHM blueprintTool;
         private int blueprintToolModeIndex;
-        public static bool isBulkDemolishRunning { get; private set; } = false;
+        public static bool isBulkDemolishRunning => Messenger.HasListener("BulkDemolishTerrain.Destroy");
 
         public override void OnAddedToWorld()
         {
@@ -33,12 +33,6 @@ namespace Duplicationer
             CommonEvents.OnDeselectTool += CustomHandheldModeManager.ExitCurrentMode2;
 
             blueprintToolModeIndex = CustomHandheldModeManager.RegisterMode(blueprintTool);
-
-            isBulkDemolishRunning = false;
-            Messenger.RegisterListener<bool>("BulkDemolishTerrain_Running", "Duplicationer", (isRunning) =>
-            {
-                isBulkDemolishRunning = isRunning;
-            });
         }
 
         public override void OnRemovedFromWorld()
@@ -48,11 +42,10 @@ namespace Duplicationer
             CustomHandheldModeManager.DeregisterMode(blueprintTool);
 
             blueprintTool = null;
-            isBulkDemolishRunning = false;
         }
 
         [EventHandler]
-        private void Update(OnUpdate evt)
+        public void Update(OnUpdate evt)
         {
             var clientCharacter = GameRoot.getClientCharacter();
             if (clientCharacter == null) return;

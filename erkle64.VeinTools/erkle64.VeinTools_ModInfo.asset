@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -360740676, guid: 1c83dc1f03b8cf43812e942694488c9e, type: 3}
+  m_Name: erkle64.VeinTools_ModInfo
+  m_EditorClassIdentifier: 
+  identifier: erkle64.VeinTools
+  displayName: erkle64.VeinTools
+  description: Tools for preparing ore veins for mining.
+  modType: 2
+  thumbnail: thumbnail.png
+  assetBundles:
+  - erkle64.VeinTools_bundle
+  assemblies:
+  - erkle64.VeinTools.dll
+  dependsOn:
+  - erkle64.Unfoundry
+  - erkle64.Duplicationer
+  thumbnailTexture: {fileID: 2800000, guid: 2fb0ee31d383c1548bcd42132f1b68a8, type: 3}

@@ -2,20 +2,40 @@
 
 namespace Duplicationer
 {
-    public class BlueprintRequest : IEvent
+    public class BlueprintRequest
     {
-        public Vector3Int size;
+        public int positionX;
+        public int positionY;
+        public int positionZ;
+        public int sizeX;
+        public int sizeY;
+        public int sizeZ;
         public Building[] buildings;
+        public TrainTrack[] tracks;
         public byte[] blocks;
 
         public struct Building
         {
             public ulong templateId;
-            public Vector3Int anchorPosition;
+            public int anchorPositionX;
+            public int anchorPositionY;
+            public int anchorPositionZ;
             public BuildingManager.BuildOrientation orientationY;
-            public Quaternion orientationUnlocked;
+            public float orientationUnlockedX;
+            public float orientationUnlockedY;
+            public float orientationUnlockedZ;
+            public float orientationUnlockedW;
             public byte itemMode;
-            public (string, object)[] customData;
+            public (string, string)[] customData;
+        }
+
+        public struct TrainTrack
+        {
+            public ulong templateId;
+            public int anchorPositionX;
+            public int anchorPositionY;
+            public int anchorPositionZ;
+            public int orientationY;
         }
     }
 }

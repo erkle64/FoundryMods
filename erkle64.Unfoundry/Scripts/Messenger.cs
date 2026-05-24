@@ -30,7 +30,7 @@ namespace Unfoundry
                 }
                 catch(System.Exception ex)
                 {
-                    UnityEngine.Debug.LogWarning($"Failed to decode message '{messageName}': {ex}");
+                    UnityEngine.Debug.LogWarning($"Failed to decode message '{messageName}': {ex}\n{message}");
                 }
             });
         }
@@ -41,6 +41,11 @@ namespace Unfoundry
             {
                 handlers.Remove(receiverName);
             }
+        }
+
+        public static bool HasListener(string messageName)
+        {
+            return _messageHandlers.ContainsKey(messageName) && _messageHandlers[messageName].Count > 0;
         }
 
         public static void Send<T>(string messageName, T message)

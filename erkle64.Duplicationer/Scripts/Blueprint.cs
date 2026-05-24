@@ -144,12 +144,10 @@ namespace Duplicationer
             var trainTrackIds = new HashSet<ulong>();
             var trackIds = new List<ulong>();
             TrainRenderSystem.get().queryTrainTracksByVoxelAABB3D(aabb, true, trackIds);
-            Debug.Log($"Found {trackIds.Count} train tracks in area");
             foreach (ulong trackId in trackIds)
             {
                 trainTrackIds.Add(trackId);
             }
-            Debug.Log($"Found {trainTrackIds.Count} train tracks in area after deduplication");
 
             return Create(from, size, buildings, trainTrackIds, blocks);
         }
@@ -349,6 +347,7 @@ namespace Duplicationer
             var shoppingList = new Dictionary<ulong, ShoppingListData>();
 
             var blueprintData = new BlueprintData();
+
             blueprintData.buildableObjects = new BlueprintData.BuildableObjectData[blueprintRequest.buildings.Length];
             for (int i = 0; i < blueprintRequest.buildings.Length; i++)
             {
@@ -367,21 +366,39 @@ namespace Duplicationer
                     originalEntityId = (ulong)(i + 1),
                     templateName = template.name,
                     templateId = building.templateId,
-                    worldX = building.anchorPosition.x,
-                    worldY = building.anchorPosition.y,
-                    worldZ = building.anchorPosition.z,
-                    orientationUnlockedX = building.orientationUnlocked.x,
-                    orientationUnlockedY = building.orientationUnlocked.y,
-                    orientationUnlockedZ = building.orientationUnlocked.z,
-                    orientationUnlockedW = building.orientationUnlocked.w,
+                    worldX = building.anchorPositionX,
+                    worldY = building.anchorPositionY,
+                    worldZ = building.anchorPositionZ,
+                    orientationUnlockedX = building.orientationUnlockedX,
+                    orientationUnlockedY = building.orientationUnlockedY,
+                    orientationUnlockedZ = building.orientationUnlockedZ,
+                    orientationUnlockedW = building.orientationUnlockedW,
                     orientationY = (byte)building.orientationY,
                     itemMode = building.itemMode,
                     customData = customData
                 };
             }
-            blueprintData.blocks.sizeX = blueprintRequest.size.x;
-            blueprintData.blocks.sizeY = blueprintRequest.size.y;
-            blueprintData.blocks.sizeZ = blueprintRequest.size.z;
+
+            blueprintData.trainTracks = new BlueprintData.TrainTrackData[blueprintRequest.tracks.Length];
+            for (int i = 0; i < blueprintRequest.tracks.Length; i++)
+            {
+                var track = blueprintRequest.tracks[i];
+                var template = ItemTemplateManager.getTrainTrackTemplate(track.templateId);
+                blueprintData.trainTracks[i] = new BlueprintData.TrainTrackData
+                {
+                    originalEntityId = (ulong)(i + 1),
+                    templateName = template.name,
+                    templateId = track.templateId,
+                    worldX = track.anchorPositionX,
+                    worldY = track.anchorPositionY,
+                    worldZ = track.anchorPositionZ,
+                    orientationY = (byte)track.orientationY
+                };
+            }
+
+            blueprintData.blocks.sizeX = blueprintRequest.sizeX;
+            blueprintData.blocks.sizeY = blueprintRequest.sizeY;
+            blueprintData.blocks.sizeZ = blueprintRequest.sizeZ;
             blueprintData.blocks.ids = blueprintRequest.blocks;
 
             BuildShoppingList(blueprintData, shoppingList);
@@ -564,7 +581,7 @@ namespace Duplicationer
             _iconItemTemplates = iconItemTemplates;
 
             var json = JSON.Dump(_data, EncodeOptions.PrettyPrint | EncodeOptions.NoTypeHints);
-            System.IO.File.WriteAllText(Path.ChangeExtension(path, "json"), json); // for debugging purposes
+            //System.IO.File.WriteAllText(Path.ChangeExtension(path, "json"), json); // for debugging purposes
             var compressed = Compress(json);
             Debug.Log($"Compressed blueprint: {json.Length} -> {compressed.Length}");
 
@@ -636,97 +653,100 @@ namespace Duplicationer
 
             if (_data.blocks.ids == null) throw new System.ArgumentNullException(nameof(_data.blocks.ids));
 
-            int blockIndex = 0;
-            for (int z = 0; z < _data.blocks.sizeZ; z++)
+            if (BlueprintToolCHM.AreChunksLoadedForBounds(anchorPosition, anchorPosition + _data.blocks.Size - Vector3Int.one))
             {
-                for (int y = 0; y < _data.blocks.sizeY; y++)
+                int blockIndex = 0;
+                for (int z = 0; z < _data.blocks.sizeZ; z++)
                 {
-                    for (int x = 0; x < _data.blocks.sizeX; x++)
+                    for (int y = 0; y < _data.blocks.sizeY; y++)
                     {
-                        var blockId = _data.blocks.ids[blockIndex++];
-                        if (blockId > 0)
+                        for (int x = 0; x < _data.blocks.sizeX; x++)
                         {
-                            var worldPos = new Vector3Int(x, y, z) + anchorPosition;
-                            ChunkManager.getChunkIdxAndTerrainArrayIdxFromWorldCoords(worldPos.x, worldPos.y, worldPos.z, out ulong worldChunkIndex, out uint worldBlockIndex);
-                            var terrainData = ChunkManager.chunks_getTerrainData(worldChunkIndex, worldBlockIndex);
-
-                            if (terrainData == 0 && StreamingSystem.get().queryPointXYZ(worldPos) == null)
+                            var blockId = _data.blocks.ids[blockIndex++];
+                            if (blockId > 0)
                             {
-                                if (blockId >= GameRoot.BUILDING_PART_ARRAY_IDX_START)
+                                var worldPos = new Vector3Int(x, y, z) + anchorPosition;
+                                ChunkManager.getChunkIdxAndTerrainArrayIdxFromWorldCoords(worldPos.x, worldPos.y, worldPos.z, out ulong worldChunkIndex, out uint worldBlockIndex);
+                                var terrainData = ChunkManager.chunks_getTerrainData(worldChunkIndex, worldBlockIndex);
+
+                                if (terrainData == 0 && StreamingSystem.get().queryPointXYZ(worldPos) == null)
                                 {
-                                    var partTemplate = ItemTemplateManager.getBuildingPartTemplate(GameRoot.BuildingPartIdxLookupTable.table[blockId]);
-                                    if (partTemplate != null && partTemplate.parentItemTemplate != null)
+                                    if (blockId >= GameRoot.BUILDING_PART_ARRAY_IDX_START)
                                     {
-                                        ActionManager.AddQueuedEvent(() =>
-                                        {
-                                            int mode = 0;
-                                            if (partTemplate.parentItemTemplate.toggleableModes != null && partTemplate.parentItemTemplate.toggleableModes.Length != 0 && partTemplate.parentItemTemplate.toggleableModeType == ItemTemplate.ItemTemplateToggleableModeTypes.MultipleBuildings)
-                                            {
-                                                for (int index = 0; index < partTemplate.parentItemTemplate.toggleableModes.Length; ++index)
-                                                {
-                                                    if (partTemplate.parentItemTemplate.toggleableModes[index].buildableObjectTemplate == partTemplate)
-                                                    {
-                                                        mode = index;
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                            GameRoot.addLockstepEvent(new BuildEntityEvent(usernameHash, partTemplate.parentItemTemplate.id, mode, new int[] { worldPos.x, worldPos.y, worldPos.z }, 0, Quaternion.identity, DuplicationerSystem.IsCheatModeEnabled ? 0 : 1, 0, false));
-                                        });
-                                    }
-                                }
-                                else
-                                {
-                                    var blockTemplate = ItemTemplateManager.getTerrainBlockTemplateByByteIdx(blockId);
-                                    if (blockTemplate != null && blockTemplate.yieldItemOnDig_template != null && blockTemplate.yieldItemOnDig_template.buildableObjectTemplate != null)
-                                    {
-                                        ActionManager.AddQueuedEvent(() =>
-                                        {
-                                            int mode = 0;
-                                            if (blockTemplate.yieldItemOnDig_template.toggleableModes != null && blockTemplate.yieldItemOnDig_template.toggleableModes.Length != 0 && blockTemplate.yieldItemOnDig_template.toggleableModeType == ItemTemplate.ItemTemplateToggleableModeTypes.MultipleBuildings)
-                                            {
-                                                for (int index = 0; index < blockTemplate.yieldItemOnDig_template.toggleableModes.Length; ++index)
-                                                {
-                                                    if (blockTemplate.yieldItemOnDig_template.toggleableModes[index].buildableObjectTemplate == blockTemplate.parentBOT)
-                                                    {
-                                                        mode = index;
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                            GameRoot.addLockstepEvent(new BuildEntityEvent(usernameHash, blockTemplate.yieldItemOnDig_template.id, mode, new int[] { worldPos.x, worldPos.y, worldPos.z }, 0, Quaternion.identity, DuplicationerSystem.IsCheatModeEnabled ? 0 : 1, 0, false));
-                                        });
-                                    }
-                                    else if (blockTemplate != null && blockTemplate.parentBOT != null)
-                                    {
-                                        var itemTemplate = blockTemplate.parentBOT.parentItemTemplate;
-                                        if (itemTemplate != null)
+                                        var partTemplate = ItemTemplateManager.getBuildingPartTemplate(GameRoot.BuildingPartIdxLookupTable.table[blockId]);
+                                        if (partTemplate != null && partTemplate.parentItemTemplate != null)
                                         {
                                             ActionManager.AddQueuedEvent(() =>
                                             {
                                                 int mode = 0;
-                                                if (itemTemplate.toggleableModes != null && itemTemplate.toggleableModes.Length != 0 && itemTemplate.toggleableModeType == ItemTemplate.ItemTemplateToggleableModeTypes.MultipleBuildings)
+                                                if (partTemplate.parentItemTemplate.toggleableModes != null && partTemplate.parentItemTemplate.toggleableModes.Length != 0 && partTemplate.parentItemTemplate.toggleableModeType == ItemTemplate.ItemTemplateToggleableModeTypes.MultipleBuildings)
                                                 {
-                                                    for (int index = 0; index < itemTemplate.toggleableModes.Length; ++index)
+                                                    for (int index = 0; index < partTemplate.parentItemTemplate.toggleableModes.Length; ++index)
                                                     {
-                                                        if (itemTemplate.toggleableModes[index].buildableObjectTemplate == blockTemplate.parentBOT)
+                                                        if (partTemplate.parentItemTemplate.toggleableModes[index].buildableObjectTemplate == partTemplate)
                                                         {
                                                             mode = index;
                                                             break;
                                                         }
                                                     }
                                                 }
-                                                GameRoot.addLockstepEvent(new BuildEntityEvent(usernameHash, itemTemplate.id, mode, new int[] { worldPos.x, worldPos.y, worldPos.z }, 0, Quaternion.identity, DuplicationerSystem.IsCheatModeEnabled ? 0 : 1, 0, false));
+                                                GameRoot.addLockstepEvent(new BuildEntityEvent(usernameHash, partTemplate.parentItemTemplate.id, mode, new int[] { worldPos.x, worldPos.y, worldPos.z }, 0, Quaternion.identity, DuplicationerSystem.IsCheatModeEnabled ? 0 : 1, 0, false));
                                             });
-                                        }
-                                        else
-                                        {
-                                            DuplicationerSystem.log.LogWarning((string)$"No item template for terrain index {blockId}");
                                         }
                                     }
                                     else
                                     {
-                                        DuplicationerSystem.log.LogWarning((string)$"No block template for terrain index {blockId}");
+                                        var blockTemplate = ItemTemplateManager.getTerrainBlockTemplateByByteIdx(blockId);
+                                        if (blockTemplate != null && blockTemplate.yieldItemOnDig_template != null && blockTemplate.yieldItemOnDig_template.buildableObjectTemplate != null)
+                                        {
+                                            ActionManager.AddQueuedEvent(() =>
+                                            {
+                                                int mode = 0;
+                                                if (blockTemplate.yieldItemOnDig_template.toggleableModes != null && blockTemplate.yieldItemOnDig_template.toggleableModes.Length != 0 && blockTemplate.yieldItemOnDig_template.toggleableModeType == ItemTemplate.ItemTemplateToggleableModeTypes.MultipleBuildings)
+                                                {
+                                                    for (int index = 0; index < blockTemplate.yieldItemOnDig_template.toggleableModes.Length; ++index)
+                                                    {
+                                                        if (blockTemplate.yieldItemOnDig_template.toggleableModes[index].buildableObjectTemplate == blockTemplate.parentBOT)
+                                                        {
+                                                            mode = index;
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                                GameRoot.addLockstepEvent(new BuildEntityEvent(usernameHash, blockTemplate.yieldItemOnDig_template.id, mode, new int[] { worldPos.x, worldPos.y, worldPos.z }, 0, Quaternion.identity, DuplicationerSystem.IsCheatModeEnabled ? 0 : 1, 0, false));
+                                            });
+                                        }
+                                        else if (blockTemplate != null && blockTemplate.parentBOT != null)
+                                        {
+                                            var itemTemplate = blockTemplate.parentBOT.parentItemTemplate;
+                                            if (itemTemplate != null)
+                                            {
+                                                ActionManager.AddQueuedEvent(() =>
+                                                {
+                                                    int mode = 0;
+                                                    if (itemTemplate.toggleableModes != null && itemTemplate.toggleableModes.Length != 0 && itemTemplate.toggleableModeType == ItemTemplate.ItemTemplateToggleableModeTypes.MultipleBuildings)
+                                                    {
+                                                        for (int index = 0; index < itemTemplate.toggleableModes.Length; ++index)
+                                                        {
+                                                            if (itemTemplate.toggleableModes[index].buildableObjectTemplate == blockTemplate.parentBOT)
+                                                            {
+                                                                mode = index;
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+                                                    GameRoot.addLockstepEvent(new BuildEntityEvent(usernameHash, itemTemplate.id, mode, new int[] { worldPos.x, worldPos.y, worldPos.z }, 0, Quaternion.identity, DuplicationerSystem.IsCheatModeEnabled ? 0 : 1, 0, false));
+                                                });
+                                            }
+                                            else
+                                            {
+                                                DuplicationerSystem.log.LogWarning((string)$"No item template for terrain index {blockId}");
+                                            }
+                                        }
+                                        else
+                                        {
+                                            DuplicationerSystem.log.LogWarning((string)$"No block template for terrain index {blockId}");
+                                        }
                                     }
                                 }
                             }
@@ -754,6 +774,11 @@ namespace Duplicationer
                         DuplicationerSystem.log.LogWarning($"No item template for track template {trackTemplate.name}");
                         continue;
                     }
+
+                    // get bounds of track to check if chunks are loaded before placing
+                    var trackBounds = trackTemplate.orientationVariants[trainTrackData.orientationY].list_aabbs[0];
+                    if (!BlueprintToolCHM.AreChunksLoadedForBounds(anchorPosition + trackBounds.pos, anchorPosition + trackBounds.pos + trackBounds.size - Vector3Int.one, 1))
+                        continue;
 
                     ActionManager.AddQueuedEvent(() =>
                     {
@@ -795,6 +820,11 @@ namespace Duplicationer
                 else
                     BuildingManager.getWidthFromOrientation(template, (BuildingManager.BuildOrientation)buildableObjectData.orientationY, out wx, out wy, out wz);
 
+                var size = new Vector3Int(wx, wy, wz);
+                // check if chunks are loaded before placing
+                if (!BlueprintToolCHM.AreChunksLoadedForBounds(worldPos, worldPos + size - Vector3Int.one, 1))
+                    continue;
+
                 ulong additionalData_ulong_01 = 0ul;
                 ulong additionalData_ulong_02 = 0ul;
 
@@ -821,7 +851,8 @@ namespace Duplicationer
                             ref additionalData_ulong_02,
                             ref dcsData,
                             ref _data,
-                            entityIdMap);
+                            entityIdMap,
+                            anchorPosition);
                     }
                 }
 

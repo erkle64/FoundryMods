@@ -10,6 +10,7 @@ namespace Duplicationer
     internal class SaveFrame : DuplicationerFrame
     {
         [Header("Save Frame")]
+        [SerializeField] private TMP_InputField _searchInputField = null;
         [SerializeField] private GameObject _saveGridObject = null;
         [SerializeField] private GameObject _saveFramePreviewContainer = null;
         [SerializeField] private Image[] _saveFrameIconImages = new Image[4] { null, null, null, null };
@@ -26,6 +27,8 @@ namespace Duplicationer
             ItemElementTemplate.Empty
         };
         private int _saveFrameIconCount = 0;
+
+        private string _searchFilter = string.Empty;
 
         public string BlueprintName
         {
@@ -48,6 +51,10 @@ namespace Duplicationer
         public void Show()
         {
             if (IsOpen) return;
+
+            _searchFilter = string.Empty;
+            _searchInputField.SetTextWithoutNotify(string.Empty);
+            FilterSaveGrid();
 
             _tool.HideBlueprintFrame(true);
             _tool.HideLibraryFrame(true);
@@ -202,6 +209,7 @@ namespace Duplicationer
                 if (itemTemplate.isHiddenItem) continue;
 
                 var gameObject = Object.Instantiate(_tool.prefabBlueprintButtonIcon.Prefab, _saveGridObject.transform);
+                gameObject.name = itemTemplate.fullIdentifier;
 
                 var iconImage = gameObject.transform.Find("Icon1")?.GetComponent<Image>();
                 if (iconImage != null) iconImage.sprite = itemTemplate.icon;
@@ -214,6 +222,20 @@ namespace Duplicationer
 
                 var panel = gameObject.GetComponent<Image>();
                 if (panel != null) panel.color = Color.clear;
+            }
+        }
+
+        internal void FilterSaveGrid()
+        {
+            if (_saveGridObject == null) return;
+
+            foreach (Transform child in _saveGridObject.transform)
+            {
+                var itemTemplate = ItemElementTemplate.Get(child.gameObject.name);
+                if (itemTemplate.isValid)
+                {
+                    child.gameObject.SetActive(string.IsNullOrWhiteSpace(_searchFilter) || itemTemplate.name.IndexOf(_searchFilter, System.StringComparison.OrdinalIgnoreCase) >= 0);
+                }
             }
         }
 
@@ -277,6 +299,12 @@ namespace Duplicationer
         {
             if (_saveFramePreviewLabel != null) _saveFramePreviewLabel.text = Path.GetFileName(value);
             _buttonSave.interactable = !string.IsNullOrWhiteSpace(value);
+        }
+
+        public void OnChange_Search(string value)
+        {
+            _searchFilter = value ?? string.Empty;
+            FilterSaveGrid();
         }
     }
 }

@@ -55,8 +55,6 @@ namespace Duplicationer
         {
             var dsc = new DataProcessingEntityDataSystemControls();
             DSF_DataProcessor.dataProcessorEntity_modifyDSC(bogo.relatedEntityId, IOBool.iotrue, ref dsc);
-            var dcsData = JSON.Dump(dsc, EncodeOptions.NoTypeHints);
-            customData.Add("dcsData", dcsData);
             customData.Add("dcsDataStr", SerializeDCSData(dsc));
         }
     }

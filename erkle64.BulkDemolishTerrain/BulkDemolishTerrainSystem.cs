@@ -76,7 +76,7 @@ namespace BulkDemolishTerrain
                 )
             );
 
-            Messenger.RegisterListener<BulkDemolishTerrainDestroyRequest>("BulkDemolishTerrain_Destroy", "BulkDemolishTerrain", ApplyDestroyTerrainRequest);
+            Messenger.RegisterListener<BulkDemolishTerrainDestroyRequest>("BulkDemolishTerrain.Destroy", "BulkDemolishTerrain", ApplyDestroyTerrainRequest);
         }
 
         public override void OnRemovedFromWorld()
@@ -84,17 +84,6 @@ namespace BulkDemolishTerrain
             _radialMenuStateControl = null;
 
             Config.General.playerPlacedOnly.onValueChanged -= OnPlayerPlacedOnlyChanged;
-        }
-
-        bool _hasNotifiedPresence = false;
-        [EventHandler]
-        public void OnUpdate(OnUpdate _)
-        {
-            if (_hasNotifiedPresence)
-                return;
-
-            _hasNotifiedPresence = true;
-            Messenger.Send("BulkDemolishTerrain_Running", true);
         }
 
         [Serializable]
@@ -170,33 +159,41 @@ namespace BulkDemolishTerrain
             var miningLevel = ResearchSystem.getUnlockedMiningHardnessLevel();
             if (force || shouldRemove == null)
             {
-                var terrainTypes = ItemTemplateManager.getAllTerrainTemplates();
+                var terrainTypes = GameRoot.RunningIdxTable_terrainBlockTypes_all;
 
-                shouldRemove = new List<bool>
-                        {
-                            false, // Air
-                            false  // ???
-                        };
+                shouldRemove = new List<bool>(terrainTypes.highestUsedKey);
 
                 if (Config.General.playerPlacedOnly.value)
                 {
-                    foreach (var terrainType in terrainTypes)
+                    for (int terrainIndex = 0; terrainIndex < terrainTypes.highestUsedKey; terrainIndex++)
                     {
+                        var terrainType = terrainTypes.getDataByRunningIdx(terrainIndex);
+                        if (terrainType == null)
+                        {
+                            shouldRemove.Add(false);
+                            continue;
+                        }
                         shouldRemove.Add(
-                            terrainType.Value.destructible
-                            && terrainType.Value.yieldItemOnDig_template != null
-                            && terrainType.Value.yieldItemOnDig_template.buildableObjectTemplate != null
-                            && terrainType.Value.parentBOT != null
-                            && (Config.General.ignoreMiningLevel.value || terrainType.Value.requiredMiningHardnessLevel <= miningLevel));
+                            terrainType.destructible
+                            && terrainType.yieldItemOnDig_template != null
+                            && terrainType.yieldItemOnDig_template.buildableObjectTemplate != null
+                            && terrainType.parentBOT != null
+                            && (Config.General.ignoreMiningLevel.value || terrainType.requiredMiningHardnessLevel <= miningLevel));
                     }
                 }
                 else
                 {
-                    foreach (var terrainType in terrainTypes)
+                    for (int terrainIndex = 0; terrainIndex < terrainTypes.highestUsedKey; terrainIndex++)
                     {
+                        var terrainType = terrainTypes.getDataByRunningIdx(terrainIndex);
+                        if (terrainType == null)
+                        {
+                            shouldRemove.Add(false);
+                            continue;
+                        }
                         shouldRemove.Add(
-                            terrainType.Value.destructible
-                            && (Config.General.ignoreMiningLevel.value || terrainType.Value.requiredMiningHardnessLevel <= miningLevel));
+                            terrainType.destructible
+                            && (Config.General.ignoreMiningLevel.value || terrainType.requiredMiningHardnessLevel <= miningLevel));
                     }
                 }
             }
@@ -207,21 +204,25 @@ namespace BulkDemolishTerrain
             var miningLevel = ResearchSystem.getUnlockedMiningHardnessLevel();
             if (isOre == null)
             {
-                var terrainTypes = ItemTemplateManager.getAllTerrainTemplates();
+                var terrainTypes = GameRoot.RunningIdxTable_terrainBlockTypes_all;
 
-                isOre = new List<bool>
-                        {
-                            false, // Air
-                            false  // ???
-                        };
+                isOre = new List<bool>(terrainTypes.highestUsedKey);
 
-                foreach (var terrainType in terrainTypes)
+                for (int terrainIndex = 0; terrainIndex < terrainTypes.highestUsedKey; terrainIndex++)
                 {
+                    var terrainType = terrainTypes.getDataByRunningIdx(terrainIndex);
+                    if (terrainType == null)
+                    {
+                        Debug.Log($"Terrain index {terrainIndex} has no data");
+                        isOre.Add(false);
+                        continue;
+                    }
+                    Debug.Log($"Terrain {terrainType.name}#{terrainIndex} isOre: {terrainType.flags.HasFlagNonAlloc(TerrainBlockType.TerrainTypeFlags.Ore) || terrainType.flags.HasFlagNonAlloc(TerrainBlockType.TerrainTypeFlags.OreVeinMineable) || terrainType.flags.HasFlagNonAlloc(TerrainBlockType.TerrainTypeFlags.OreVeinCore) || terrainType.flags.HasFlagNonAlloc(TerrainBlockType.TerrainTypeFlags.OreVeinExterior)}");
                     isOre.Add(
-                        terrainType.Value.flags.HasFlagNonAlloc(TerrainBlockType.TerrainTypeFlags.Ore)
-                        || terrainType.Value.flags.HasFlagNonAlloc(TerrainBlockType.TerrainTypeFlags.OreVeinMineable)
-                        || terrainType.Value.flags.HasFlagNonAlloc(TerrainBlockType.TerrainTypeFlags.OreVeinCore)
-                        || terrainType.Value.flags.HasFlagNonAlloc(TerrainBlockType.TerrainTypeFlags.OreVeinExterior));
+                        terrainType.flags.HasFlagNonAlloc(TerrainBlockType.TerrainTypeFlags.Ore)
+                        || terrainType.flags.HasFlagNonAlloc(TerrainBlockType.TerrainTypeFlags.OreVeinMineable)
+                        || terrainType.flags.HasFlagNonAlloc(TerrainBlockType.TerrainTypeFlags.OreVeinCore)
+                        || terrainType.flags.HasFlagNonAlloc(TerrainBlockType.TerrainTypeFlags.OreVeinExterior));
                 }
             }
         }
@@ -328,6 +329,9 @@ namespace BulkDemolishTerrain
                         {
                             for (var chunkX = fromChunkX; chunkX <= toChunkX; chunkX++)
                             {
+                                if (!AreChunksLoaded(chunkX, chunkZ, 2))
+                                    continue;
+
                                 var chunkFromX = chunkX * Chunk.CHUNKSIZE_XZ;
                                 var chunkFromZ = chunkZ * Chunk.CHUNKSIZE_XZ;
                                 var chunkToX = chunkFromX + Chunk.CHUNKSIZE_XZ - 1;
@@ -389,6 +393,9 @@ namespace BulkDemolishTerrain
                                 {
                                     for (var chunkX = fromChunkX; chunkX <= toChunkX; chunkX++)
                                     {
+                                        if (!AreChunksLoaded(chunkX, chunkZ, 2))
+                                            continue;
+
                                         var chunkFromX = chunkX * Chunk.CHUNKSIZE_XZ;
                                         var chunkFromZ = chunkZ * Chunk.CHUNKSIZE_XZ;
                                         var chunkToX = chunkFromX + Chunk.CHUNKSIZE_XZ - 1;
@@ -436,6 +443,9 @@ namespace BulkDemolishTerrain
                         {
                             for (var chunkX = fromChunkX; chunkX <= toChunkX; chunkX++)
                             {
+                                if (!AreChunksLoaded(chunkX, chunkZ, 2))
+                                    continue;
+
                                 var chunkFromX = chunkX * Chunk.CHUNKSIZE_XZ;
                                 var chunkFromZ = chunkZ * Chunk.CHUNKSIZE_XZ;
                                 var chunkToX = chunkFromX + Chunk.CHUNKSIZE_XZ - 1;
@@ -478,6 +488,19 @@ namespace BulkDemolishTerrain
                     }
                 });
             }
+        }
+
+        public static bool AreChunksLoaded(int chunkX, int chunkZ, int padding)
+        {
+            for (var z = chunkZ - padding; z <= chunkZ + padding; z++)
+            {
+                for (var x = chunkX - padding; x <= chunkX + padding; x++)
+                {
+                    if (ChunkManager.chunkManager_doesChunkExist(ChunkManager.calculateChunkIdx(x, z)) == IOBool.iofalse)
+                        return false;
+                }
+            }
+            return true;
         }
 
         [HarmonyPatch]
@@ -610,6 +633,9 @@ namespace BulkDemolishTerrain
                     {
                         for (var chunkX = fromChunkX; chunkX <= toChunkX; chunkX++)
                         {
+                            if (!AreChunksLoaded(chunkX, chunkZ, 2))
+                                continue;
+
                             var chunkFromX = chunkX * Chunk.CHUNKSIZE_XZ;
                             var chunkFromZ = chunkZ * Chunk.CHUNKSIZE_XZ;
                             var chunkToX = chunkFromX + Chunk.CHUNKSIZE_XZ - 1;
@@ -642,6 +668,8 @@ namespace BulkDemolishTerrain
                                                 ActionManager.AddQueuedEvent(() => GameRoot.addLockstepEvent(new Character.RemoveTerrainEvent(characterHash, coords, 0, false)));
                                             }
                                         }
+                                        if (terrainData < isOre.Count)
+                                            Debug.Log($"Terrain data at {coords}: {terrainData}, isOre: {isOre[terrainData]}");
                                         if (terrainData < isOre.Count && isOre[terrainData])
                                         {
                                             hasOre = true;
@@ -666,6 +694,9 @@ namespace BulkDemolishTerrain
                             {
                                 for (var chunkX = fromChunkX; chunkX <= toChunkX; chunkX++)
                                 {
+                                    if (!AreChunksLoaded(chunkX, chunkZ, 2))
+                                        continue;
+
                                     var chunkFromX = chunkX * Chunk.CHUNKSIZE_XZ;
                                     var chunkFromZ = chunkZ * Chunk.CHUNKSIZE_XZ;
                                     var chunkToX = chunkFromX + Chunk.CHUNKSIZE_XZ - 1;
@@ -711,6 +742,9 @@ namespace BulkDemolishTerrain
                         {
                             for (var chunkX = fromChunkX; chunkX <= toChunkX; chunkX++)
                             {
+                                if (!AreChunksLoaded(chunkX, chunkZ, 2))
+                                    continue;
+
                                 var chunkFromX = chunkX * Chunk.CHUNKSIZE_XZ;
                                 var chunkFromZ = chunkZ * Chunk.CHUNKSIZE_XZ;
                                 var chunkToX = chunkFromX + Chunk.CHUNKSIZE_XZ - 1;

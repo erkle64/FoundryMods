@@ -166,11 +166,13 @@ namespace Duplicationer
         public override void Registered()
         {
             Messenger.RegisterListener<BlueprintRequest>("Duplicationer.CreateBlueprint", nameof(BlueprintToolCHM), ReceiveBlueprintRequest);
+            Messenger.RegisterListener<BlueprintRequest>("Duplicationer.PlaceBlueprint", nameof(BlueprintToolCHM), ReceivePlaceBlueprintRequest);
         }
 
         public override void Deregistered()
         {
             Messenger.DeregisterListener("Duplicationer.CreateBlueprint", nameof(BlueprintToolCHM));
+            Messenger.DeregisterListener("Duplicationer.PlaceBlueprint", nameof(BlueprintToolCHM));
         }
 
         private void CreateFrame<T>(ref T frame, string prefabPath) where T : DuplicationerFrame
@@ -332,7 +334,22 @@ namespace Duplicationer
             isDragArrowVisible = false;
             SelectMode(modePlace);
             boxMode = BoxMode.None;
+            repeatFrom = repeatTo = Vector3Int.zero;
             AudioManager.playUISoundEffect(ResourceDB.resourceLinker.audioClip_recipeCopyTool_copy);
+            RefreshBlueprint();
+        }
+
+        public void ReceivePlaceBlueprintRequest(BlueprintRequest blueprintRequest)
+        {
+            ClearBlueprintPlaceholders();
+            CurrentBlueprint = Blueprint.Create(blueprintRequest);
+            isDragArrowVisible = false;
+            ShowBlueprint(new Vector3Int(blueprintRequest.positionX, blueprintRequest.positionY, blueprintRequest.positionZ));
+            SelectMode(modeMove);
+            boxMode = BoxMode.Blueprint;
+            repeatFrom = repeatTo = Vector3Int.zero;
+            AudioManager.playUISoundEffect(ResourceDB.resourceLinker.audioClip_recipeCopyTool_copy);
+            RefreshBlueprint();
         }
 
         private BlueprintPlaceholder FindPlaceholderForBuilding(int index)
@@ -447,70 +464,96 @@ namespace Duplicationer
                     else
                         BuildingManager.getWidthFromOrientation(buildableObjectTemplate, (BuildingManager.BuildOrientation)buildableObjectData.orientationY, out wx, out wy, out wz);
 
-                    byte errorCodeRaw = 0;
-                    v3i[] powerLineCollisionArray = new v3i[0];
-                    BuildingManager.buildingManager_validateConstruction_buildableEntityWrapper(new v3i(worldPos.x, worldPos.y, worldPos.z), buildableObjectData.orientationY, buildableObjectData.orientationUnlocked, buildableObjectData.templateId, ref errorCodeRaw, IOBool.iofalse, powerLineCollisionArray, 0);
-                    var errorCode = (BuildingManager.CheckBuildableErrorCode)errorCodeRaw;
-
-                    if (errorCode == BuildingManager.CheckBuildableErrorCode.RequiresTrainTracks)
+                    // get chunk coords for worldPos to check if the chunk is loaded before doing the buildable check, since the buildable check will crash if the chunk is not loaded
+                    ChunkManager.getChunkIdxAndTerrainArrayIdxFromWorldCoords(worldPos.x, worldPos.y, worldPos.z, out ulong chunkIdx, out uint _);
+                    ChunkManager.getChunkCoordsFromChunkIdx(chunkIdx, out int chunkX, out int chunkZ);
+                    // check 3x3 chunk area centered around the chunk of worldPos to ensure the entire building is in loaded chunks
+                    bool chunksLoaded = true;
+                    for (int cx = chunkX - 1; cx <= chunkX + 1; cx++)
                     {
-                        // for buildings that require train tracks, ignore the error about missing train tracks and just check if the building itself can be placed
-                        // this is because the train tracks might be part of the same blueprint and not yet recognized as existing in the world
-                        errorCode = BuildingManager.CheckBuildableErrorCode.Success;
-                    }
-
-                    if (buildableObjectPlaceholder.ExtraBoundingBoxes != null)
-                    {
-                        foreach (var extraBox in buildableObjectPlaceholder.ExtraBoundingBoxes)
+                        for (int cz = chunkZ - 1; cz <= chunkZ + 1; cz++)
                         {
-                            AABB3D aabb = new(
-                                extraBox.position.x + CurrentBlueprintAnchor.x,
-                                extraBox.position.y + CurrentBlueprintAnchor.y,
-                                extraBox.position.z + CurrentBlueprintAnchor.z,
-                                extraBox.size.x,
-                                extraBox.size.y,
-                                extraBox.size.z);
-
-                            if (aabb.y0 < 0 || aabb.y1 >= 256)
+                            if (ChunkManager.chunkManager_doesChunkExist(ChunkManager.calculateChunkIdx(cx, cz)) == IOBool.iofalse)
                             {
-                                errorCode = BuildingManager.CheckBuildableErrorCode.BlockedByReservedArea;
+                                chunksLoaded = false;
                                 break;
                             }
+                        }
+                        if (!chunksLoaded) break;
+                    }
 
-                            using (var query = StreamingSystem.get().queryAABB3D(aabb))
+                    BuildingManager.CheckBuildableErrorCode errorCode = BuildingManager.CheckBuildableErrorCode.Success;
+                    if (!chunksLoaded)
+                    {
+                        errorCode = BuildingManager.CheckBuildableErrorCode.BlockedByReservedArea;
+                    }
+                    else
+                    {
+                        byte errorCodeRaw = 0;
+                        v3i[] powerLineCollisionArray = new v3i[0];
+                        BuildingManager.buildingManager_validateConstruction_buildableEntityWrapper(new v3i(worldPos.x, worldPos.y, worldPos.z), buildableObjectData.orientationY, buildableObjectData.orientationUnlocked, buildableObjectData.templateId, ref errorCodeRaw, IOBool.iofalse, powerLineCollisionArray, 0);
+                        errorCode = (BuildingManager.CheckBuildableErrorCode)errorCodeRaw;
+
+                        if (errorCode == BuildingManager.CheckBuildableErrorCode.RequiresTrainTracks)
+                        {
+                            // for buildings that require train tracks, ignore the error about missing train tracks and just check if the building itself can be placed
+                            // this is because the train tracks might be part of the same blueprint and not yet recognized as existing in the world
+                            errorCode = BuildingManager.CheckBuildableErrorCode.Success;
+                        }
+
+                        if (buildableObjectPlaceholder.ExtraBoundingBoxes != null)
+                        {
+                            foreach (var extraBox in buildableObjectPlaceholder.ExtraBoundingBoxes)
                             {
-                                foreach (var bogo in query)
+                                AABB3D aabb = new(
+                                    extraBox.position.x + CurrentBlueprintAnchor.x,
+                                    extraBox.position.y + CurrentBlueprintAnchor.y,
+                                    extraBox.position.z + CurrentBlueprintAnchor.z,
+                                    extraBox.size.x,
+                                    extraBox.size.y,
+                                    extraBox.size.z);
+
+                                if (aabb.y0 < 0 || aabb.y1 >= 256)
                                 {
-                                    if (aabb.hasXYZIntersection(bogo.aabb))
-                                    {
-                                        errorCode = BuildingManager.CheckBuildableErrorCode.BlockedByReservedArea;
-                                        break;
-                                    }
+                                    errorCode = BuildingManager.CheckBuildableErrorCode.BlockedByReservedArea;
+                                    break;
                                 }
-                            }
 
-                            var from = new Vector3Int(aabb.x0, aabb.y0, aabb.z0);
-                            var to = new Vector3Int(aabb.x0 + aabb.wx - 1, aabb.y0 + aabb.wy - 1, aabb.z0 + aabb.wz - 1);
-                            for (int bz = from.z; bz < to.z; ++bz)
-                            {
-                                for (int by = from.y; by < to.y; ++by)
+                                using (var query = StreamingSystem.get().queryAABB3D(aabb))
                                 {
-                                    for (int bx = from.x; bx < to.x; ++bx)
+                                    foreach (var bogo in query)
                                     {
-                                        ChunkManager.getChunkIdxAndTerrainArrayIdxFromWorldCoords(bx, by, bz, out ulong chunkIndex, out uint blockIndex);
-                                        var blockId = ChunkManager.chunks_getTerrainData(chunkIndex, blockIndex);
-                                        if (blockId > 0)
+                                        if (aabb.hasXYZIntersection(bogo.aabb))
                                         {
                                             errorCode = BuildingManager.CheckBuildableErrorCode.BlockedByReservedArea;
                                             break;
                                         }
                                     }
+                                }
+
+                                var from = new Vector3Int(aabb.x0, aabb.y0, aabb.z0);
+                                var to = new Vector3Int(aabb.x0 + aabb.wx - 1, aabb.y0 + aabb.wy - 1, aabb.z0 + aabb.wz - 1);
+                                for (int bz = from.z; bz < to.z; ++bz)
+                                {
+                                    for (int by = from.y; by < to.y; ++by)
+                                    {
+                                        for (int bx = from.x; bx < to.x; ++bx)
+                                        {
+                                            ChunkManager.getChunkIdxAndTerrainArrayIdxFromWorldCoords(bx, by, bz, out ulong chunkIndex, out uint blockIndex);
+                                            var blockId = ChunkManager.chunks_getTerrainData(chunkIndex, blockIndex);
+                                            if (blockId > 0)
+                                            {
+                                                errorCode = BuildingManager.CheckBuildableErrorCode.BlockedByReservedArea;
+                                                break;
+                                            }
+                                        }
+                                        if (errorCode == BuildingManager.CheckBuildableErrorCode.BlockedByReservedArea) break;
+                                    }
                                     if (errorCode == BuildingManager.CheckBuildableErrorCode.BlockedByReservedArea) break;
                                 }
+
                                 if (errorCode == BuildingManager.CheckBuildableErrorCode.BlockedByReservedArea) break;
                             }
-
-                            if (errorCode == BuildingManager.CheckBuildableErrorCode.BlockedByReservedArea) break;
                         }
                     }
 
@@ -583,18 +626,27 @@ namespace Duplicationer
                     var trainTrackTemplate = ItemTemplateManager.getTrainTrackTemplate(trainTrackData.templateId);
                     var repeatOffset = new Vector3Int(trainTrackPlaceholder.RepeatIndex.x * CurrentBlueprintSize.x, trainTrackPlaceholder.RepeatIndex.y * CurrentBlueprintSize.y, trainTrackPlaceholder.RepeatIndex.z * CurrentBlueprintSize.z);
                     var worldPos = new Vector3Int(trainTrackData.worldX + CurrentBlueprintAnchor.x + repeatOffset.x, trainTrackData.worldY + CurrentBlueprintAnchor.y + repeatOffset.y, trainTrackData.worldZ + CurrentBlueprintAnchor.z + repeatOffset.z);
+
+                    // get chunk coords for worldPos to check if the chunk is loaded before doing the train track check, since the train track check will crash if the chunk is not loaded
                     bool positionClear = true;
                     bool positionFilled = false;
-                    uint terrainToClear = 0u;
-                    uint decorToClear = 0u;
-                    byte errorCode = 0;
-                    var validationResult = TrainSystem.trainSystemManager_validateConstructTracks(trainTrackTemplate.id, new v3i(worldPos), trainTrackData.orientationY, ref errorCode, ref terrainToClear, ref decorToClear);
-                    if (validationResult == IOBool.iofalse)
+                    if (!AreChunksLoadedAroundCoords(worldPos))
                     {
-                        if (errorCode == (byte)TrainSystem.CheckTrainTracksErrorCode.AlreadyPlaced)
-                            positionFilled = true;
-                        else if (terrainToClear == 0 && decorToClear == 0)
-                            positionClear = false;
+                        positionClear = false;
+                    }
+                    else
+                    {
+                        uint terrainToClear = 0u;
+                        uint decorToClear = 0u;
+                        byte errorCode = 0;
+                        var validationResult = TrainSystem.trainSystemManager_validateConstructTracks(trainTrackTemplate.id, new v3i(worldPos), trainTrackData.orientationY, ref errorCode, ref terrainToClear, ref decorToClear);
+                        if (validationResult == IOBool.iofalse)
+                        {
+                            if (errorCode == (byte)TrainSystem.CheckTrainTracksErrorCode.AlreadyPlaced)
+                                positionFilled = true;
+                            else if (terrainToClear == 0 && decorToClear == 0)
+                                positionClear = false;
+                        }
                     }
 
                     if (positionClear)
@@ -637,15 +689,23 @@ namespace Duplicationer
                     {
                         ChunkManager.getChunkIdxAndTerrainArrayIdxFromWorldCoords(worldPos.x, worldPos.y, worldPos.z, out ulong chunkIndex, out uint blockIndex);
 
-                        var blockId = CurrentBlueprint.GetBlockId(placeholder.Index);
-                        var terrainData = ChunkManager.chunks_getTerrainData(chunkIndex, blockIndex);
-                        if (terrainData == blockId)
-                        {
-                            positionFilled = true;
-                        }
-                        else if (terrainData > 0)
+                        // check if the chunk is loaded before trying to get terrain data, since getting terrain data will crash if the chunk is not loaded
+                        if (ChunkManager.chunkManager_doesChunkExist(chunkIndex) == IOBool.iofalse)
                         {
                             positionClear = false;
+                        }
+                        else
+                        {
+                            var blockId = CurrentBlueprint.GetBlockId(placeholder.Index);
+                            var terrainData = ChunkManager.chunks_getTerrainData(chunkIndex, blockIndex);
+                            if (terrainData == blockId)
+                            {
+                                positionFilled = true;
+                            }
+                            else if (terrainData > 0)
+                            {
+                                positionClear = false;
+                            }
                         }
                     }
 
@@ -843,6 +903,46 @@ namespace Duplicationer
                 DrawArrow(dragFaceRay.origin, dragFaceRay.direction, dragArrowMaterial, dragArrowScale, dragArrowOffset);
                 if (isDragArrowDouble) DrawArrow(dragFaceRay.origin, -dragFaceRay.direction, dragArrowMaterial, dragArrowScale, dragArrowOffset);
             }
+        }
+
+        public static bool AreChunksLoadedForBounds(Vector3Int worldPosFrom, Vector3Int worldPosTo, int padding = 0)
+        {
+            padding += 1;
+            ChunkManager.getChunkIdxAndTerrainArrayIdxFromWorldCoords(worldPosFrom.x, worldPosFrom.y, worldPosFrom.z, out ulong chunkIndexFrom, out uint blockIndexFrom);
+            ChunkManager.getChunkCoordsFromChunkIdx(chunkIndexFrom, out int chunkXFrom, out int chunkZFrom);
+            ChunkManager.getChunkIdxAndTerrainArrayIdxFromWorldCoords(worldPosTo.x, worldPosTo.y, worldPosTo.z, out ulong chunkIndexTo, out uint blockIndexTo);
+            ChunkManager.getChunkCoordsFromChunkIdx(chunkIndexTo, out int chunkXTo, out int chunkZTo);
+
+            // check all chunks that intersect the bounds defined by worldPosFrom and worldPosTo to ensure the entire area is in loaded chunks
+            for (int cx = chunkXFrom - padding; cx <= chunkXTo + padding; cx++)
+            {
+                for (int cz = chunkZFrom - padding; cz <= chunkZTo + padding; cz++)
+                {
+                    if (ChunkManager.chunkManager_doesChunkExist(ChunkManager.calculateChunkIdx(cx, cz)) == IOBool.iofalse)
+                        return false;
+                }
+            }
+
+            return true;
+        }
+
+        public static bool AreChunksLoadedAroundCoords(Vector3Int worldPos)
+        {
+            ChunkManager.getChunkIdxAndTerrainArrayIdxFromWorldCoords(worldPos.x, worldPos.y, worldPos.z, out ulong chunkIndex, out uint blockIndex);
+            ChunkManager.getChunkCoordsFromChunkIdx(chunkIndex, out int chunkX, out int chunkZ);
+            // check 3x3 chunk area centered around the chunk of worldPos to ensure the entire train track is in loaded chunks
+            for (int cx = chunkX - 2; cx <= chunkX + 2; cx++)
+            {
+                for (int cz = chunkZ - 2; cz <= chunkZ + 2; cz++)
+                {
+                    if (ChunkManager.chunkManager_doesChunkExist(ChunkManager.calculateChunkIdx(cx, cz)) == IOBool.iofalse)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
         }
 
         public override bool OnRotateY()
@@ -1101,17 +1201,19 @@ namespace Duplicationer
         {
             if (_terrainTypeRemovalMask == null)
             {
-                var terrainTypes = ItemTemplateManager.getAllTerrainTemplates();
+                var terrainTypes = GameRoot.RunningIdxTable_terrainBlockTypes_all;
 
-                _terrainTypeRemovalMask = new List<bool>
-                {
-                    false, // Air
-                    false // ???
-                };
+                _terrainTypeRemovalMask = new List<bool>(terrainTypes.highestUsedKey);
 
-                foreach (var terrainType in terrainTypes)
+                for (int terrainIndex = 0; terrainIndex < terrainTypes.highestUsedKey; terrainIndex++)
                 {
-                    _terrainTypeRemovalMask.Add(terrainType.Value.destructible);
+                    var terrainType = terrainTypes.getDataByRunningIdx(terrainIndex);
+                    if (terrainType == null)
+                    {
+                        _terrainTypeRemovalMask.Add(false);
+                        continue;
+                    }
+                    _terrainTypeRemovalMask.Add(terrainType.destructible);
                 }
             }
 
@@ -1138,7 +1240,7 @@ namespace Duplicationer
         }
         internal void DestroyArea(bool doTerrain, bool doDecor, IEnumerable<BulkDemolishTerrainDestroyEntry> entries)
         {
-            Messenger.Send("BulkDemolishTerrain_Destroy", new BulkDemolishTerrainDestroyRequest
+            Messenger.Send("BulkDemolishTerrain.Destroy", new BulkDemolishTerrainDestroyRequest
             {
                 entries = entries.ToArray(),
                 destroyTerrain = doTerrain,
@@ -1221,28 +1323,50 @@ namespace Duplicationer
                 var shouldRemove = GetTerrainTypeRemovalMask();
 
                 int blocksRemoved = 0;
-                for (int wz = from.z; wz <= to.z; ++wz)
+                ChunkManager.getChunkCoordsFromWorldCoords(from.x, from.z, out var fromChunkX, out var fromChunkZ);
+                ChunkManager.getChunkCoordsFromWorldCoords(to.x, to.z, out var toChunkX, out var toChunkZ);
+                var size = to - from + Vector3Int.one;
+                for (var chunkZ = fromChunkZ; chunkZ <= toChunkZ; chunkZ++)
                 {
-                    for (int wy = from.y; wy <= to.y; ++wy)
+                    for (var chunkX = fromChunkX; chunkX <= toChunkX; chunkX++)
                     {
-                        for (int wx = from.x; wx <= to.x; ++wx)
-                        {
-                            ChunkManager.getChunkIdxAndTerrainArrayIdxFromWorldCoords(wx, wy, wz, out ulong chunkIndex, out uint blockIndex);
-                            var terrainData = ChunkManager.chunks_getTerrainData(chunkIndex, blockIndex);
+                        if (ChunkManager.chunkManager_doesChunkExist(ChunkManager.calculateChunkIdx(chunkX, chunkZ)) == IOBool.iofalse)
+                            continue;
 
-                            if (terrainData >= GameRoot.BUILDING_PART_ARRAY_IDX_START && doBlocks)
+                        var chunkFromX = chunkX * Chunk.CHUNKSIZE_XZ;
+                        var chunkFromZ = chunkZ * Chunk.CHUNKSIZE_XZ;
+                        var chunkToX = chunkFromX + Chunk.CHUNKSIZE_XZ - 1;
+                        var chunkToZ = chunkFromZ + Chunk.CHUNKSIZE_XZ - 1;
+                        var fromX = Mathf.Max(from.x, chunkFromX);
+                        var fromZ = Mathf.Max(from.z, chunkFromZ);
+                        var toX = Mathf.Min(to.x, chunkToX);
+                        var toZ = Mathf.Min(to.z, chunkToZ);
+
+                        for (int z = fromZ; z <= toZ; ++z)
+                        {
+                            for (int y = 0; y < size.y; ++y)
                             {
-                                var worldPos = new Vector3Int(wx, wy, wz);
-                                ulong entityId = 0;
-                                ChunkManager.chunks_getBuildingPartBlock(chunkIndex, blockIndex, ref entityId);
-                                ActionManager.AddQueuedEvent(() => GameRoot.addLockstepEvent(new Character.DemolishBuildingEvent(characterHash, entityId, 0, 0)));
-                                ++blocksRemoved;
-                            }
-                            else if (doTerrain && terrainData > 0 && terrainData < GameRoot.BUILDING_PART_ARRAY_IDX_START && terrainData < shouldRemove.Count && shouldRemove[terrainData])
-                            {
-                                var worldPos = new Vector3Int(wx, wy, wz);
-                                ActionManager.AddQueuedEvent(() => GameRoot.addLockstepEvent(new Character.RemoveTerrainEvent(characterHash, worldPos, 0, false)));
-                                ++blocksRemoved;
+                                for (int x = fromX; x <= toX; ++x)
+                                {
+                                    var coords = new Vector3Int(x, from.y + y, z);
+                                    ChunkManager.getChunkIdxAndTerrainArrayIdxFromWorldCoords(coords.x, coords.y, coords.z, out ulong chunkIndex, out uint blockIndex);
+                                    var terrainData = ChunkManager.chunks_getTerrainData(chunkIndex, blockIndex);
+
+                                    if (terrainData >= GameRoot.BUILDING_PART_ARRAY_IDX_START && doBlocks)
+                                    {
+                                        var worldPos = new Vector3Int(coords.x, coords.y, coords.z);
+                                        ulong entityId = 0;
+                                        ChunkManager.chunks_getBuildingPartBlock(chunkIndex, blockIndex, ref entityId);
+                                        ActionManager.AddQueuedEvent(() => GameRoot.addLockstepEvent(new Character.DemolishBuildingEvent(characterHash, entityId, 0, 0)));
+                                        ++blocksRemoved;
+                                    }
+                                    else if (doTerrain && terrainData > 0 && terrainData < GameRoot.BUILDING_PART_ARRAY_IDX_START && terrainData < shouldRemove.Count && shouldRemove[terrainData])
+                                    {
+                                        var worldPos = new Vector3Int(coords.x, coords.y, coords.z);
+                                        ActionManager.AddQueuedEvent(() => GameRoot.addLockstepEvent(new Character.RemoveTerrainEvent(characterHash, worldPos, 0, false)));
+                                        ++blocksRemoved;
+                                    }
+                                }
                             }
                         }
                     }

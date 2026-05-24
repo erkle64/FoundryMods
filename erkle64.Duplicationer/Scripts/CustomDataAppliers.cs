@@ -25,7 +25,8 @@ namespace Duplicationer
             ref ulong additionalData_ulong_02,
             ref byte[] dcsData,
             ref BlueprintData blueprintData,
-            Dictionary<ulong, ulong> entityIdMap)
+            Dictionary<ulong, ulong> entityIdMap,
+            UnityEngine.Vector3Int blueprintAnchorPosition)
         {
             var craftingRecipeId = customData.GetCustomData<ulong>("craftingRecipeId");
             if (craftingRecipeId != 0)
@@ -57,7 +58,8 @@ namespace Duplicationer
             ref ulong additionalData_ulong_02,
             ref byte[] dcsData,
             ref BlueprintData blueprintData,
-            Dictionary<ulong, ulong> entityIdMap)
+            Dictionary<ulong, ulong> entityIdMap,
+            UnityEngine.Vector3Int blueprintAnchorPosition)
         {
             usePasteConfigSettings = true;
             bool isInputLoader = customData.GetCustomData<bool>("isInputLoader");
@@ -92,7 +94,8 @@ namespace Duplicationer
             ref ulong additionalData_ulong_02,
             ref byte[] dcsData,
             ref BlueprintData blueprintData,
-            Dictionary<ulong, ulong> entityIdMap)
+            Dictionary<ulong, ulong> entityIdMap,
+            UnityEngine.Vector3Int blueprintAnchorPosition)
         {
             usePasteConfigSettings = true;
 
@@ -169,7 +172,24 @@ namespace Duplicationer
             var loader_dsc = customData.GetCustomData<string>("dcsData");
             if (loader_dsc != null)
             {
-                dcsData = Convert.FromBase64String(loader_dsc);
+                try
+                {
+                    dcsData = Convert.FromBase64String(loader_dsc);
+                }
+                catch (FormatException)
+                {
+                    UnityEngine.Debug.LogWarning("Failed to parse dcsData, invalid base64 string. attempting recovery");
+
+                    try
+                    {
+                        JSON.Load(loader_dsc).Make(out DataProcessingEntityDataSystemControls data);
+                        dcsData = MessagePackSerializer.Serialize(data, GlobalStateManager.msgp_options_fast);
+                    }
+                    catch (Exception)
+                    {
+                        UnityEngine.Debug.LogWarning("Failed to parse dcsData, recovery attempt failed");
+                    }
+                }
             }
         }
     }
@@ -191,7 +211,8 @@ namespace Duplicationer
             ref ulong additionalData_ulong_02,
             ref byte[] dcsData,
             ref BlueprintData blueprintData,
-            Dictionary<ulong, ulong> entityIdMap)
+            Dictionary<ulong, ulong> entityIdMap,
+            UnityEngine.Vector3Int blueprintAnchorPosition)
         {
             var color = customData.GetCustomData<int>("objectColor");
             var r = (byte)(color & 0xff);
@@ -225,7 +246,8 @@ namespace Duplicationer
             ref ulong additionalData_ulong_02,
             ref byte[] dcsData,
             ref BlueprintData blueprintData,
-            Dictionary<ulong, ulong> entityIdMap)
+            Dictionary<ulong, ulong> entityIdMap,
+            UnityEngine.Vector3Int blueprintAnchorPosition)
         {
             var balancerInputPriority = customData.GetCustomData<int>("balancerInputPriority");
             var balancerOutputPriority = customData.GetCustomData<int>("balancerOutputPriority");
@@ -257,7 +279,8 @@ namespace Duplicationer
             ref ulong additionalData_ulong_02,
             ref byte[] dcsData,
             ref BlueprintData blueprintData,
-            Dictionary<ulong, ulong> entityIdMap)
+            Dictionary<ulong, ulong> entityIdMap,
+            UnityEngine.Vector3Int blueprintAnchorPosition)
         {
             var signText = customData.GetCustomData<string>("signText");
             var signUseAutoTextSize = customData.GetCustomData<byte>("signUseAutoTextSize");
@@ -290,7 +313,8 @@ namespace Duplicationer
             ref ulong additionalData_ulong_02,
             ref byte[] dcsData,
             ref BlueprintData blueprintData,
-            Dictionary<ulong, ulong> entityIdMap)
+            Dictionary<ulong, ulong> entityIdMap,
+            UnityEngine.Vector3Int blueprintAnchorPosition)
         {
             var modeTemplateId = customData.GetCustomData<ulong>("blastFurnaceModeTemplateId");
             if (modeTemplateId > 0)
@@ -323,7 +347,8 @@ namespace Duplicationer
             ref ulong additionalData_ulong_02,
             ref byte[] dcsData,
             ref BlueprintData blueprintData,
-            Dictionary<ulong, ulong> entityIdMap)
+            Dictionary<ulong, ulong> entityIdMap,
+            UnityEngine.Vector3Int blueprintAnchorPosition)
         {
             var firstSoftLockedSlotIdx = customData.GetCustomData<uint>("firstSoftLockedSlotIdx");
             postBuildActions.Add((ConstructionTaskGroup taskGroup, ConstructionTaskGroup.ConstructionTask task) =>
@@ -365,7 +390,8 @@ namespace Duplicationer
             ref ulong additionalData_ulong_02,
             ref byte[] dcsData,
             ref BlueprintData blueprintData,
-            Dictionary<ulong, ulong> entityIdMap)
+            Dictionary<ulong, ulong> entityIdMap,
+            UnityEngine.Vector3Int blueprintAnchorPosition)
         {
             var loadConditionFlags = customData.GetCustomData<byte>("loadConditionFlags");
             var loadCondition_comparisonType = customData.GetCustomData<byte>("loadCondition_comparisonType");
@@ -402,7 +428,8 @@ namespace Duplicationer
             ref ulong additionalData_ulong_02,
             ref byte[] dcsData,
             ref BlueprintData blueprintData,
-            Dictionary<ulong, ulong> entityIdMap)
+            Dictionary<ulong, ulong> entityIdMap,
+            UnityEngine.Vector3Int blueprintAnchorPosition)
         {
             var stationName = customData.GetCustomData<string>("stationName");
             var stationType = customData.GetCustomData<byte>("stationType");
@@ -437,7 +464,8 @@ namespace Duplicationer
             ref ulong additionalData_ulong_02,
             ref byte[] dcsData,
             ref BlueprintData blueprintData,
-            Dictionary<ulong, ulong> entityIdMap)
+            Dictionary<ulong, ulong> entityIdMap,
+            UnityEngine.Vector3Int blueprintAnchorPosition)
         {
             var modularBuildingDataJSON = customData.GetCustomData<string>("modularBuildingData");
             var modularBuildingData = JSON.Load(modularBuildingDataJSON).Make<ModularBuildingData>();
@@ -482,7 +510,8 @@ namespace Duplicationer
             ref ulong additionalData_ulong_02,
             ref byte[] dcsData,
             ref BlueprintData blueprintData,
-            Dictionary<ulong, ulong> entityIdMap)
+            Dictionary<ulong, ulong> entityIdMap,
+            UnityEngine.Vector3Int blueprintAnchorPosition)
         {
             var powerlineEntityIds = new List<ulong>();
             customData.GetCustomDataList("powerline", powerlineEntityIds);
@@ -524,7 +553,8 @@ namespace Duplicationer
             ref ulong additionalData_ulong_02,
             ref byte[] dcsData,
             ref BlueprintData blueprintData,
-            Dictionary<ulong, ulong> entityIdMap)
+            Dictionary<ulong, ulong> entityIdMap,
+            UnityEngine.Vector3Int blueprintAnchorPosition)
         {
             var itemTemplateId = customData.GetCustomData<ulong>("configuredItemTemplateId");
             if (itemTemplateId > 0)
@@ -557,7 +587,8 @@ namespace Duplicationer
             ref ulong additionalData_ulong_02,
             ref byte[] dcsData,
             ref BlueprintData blueprintData,
-            Dictionary<ulong, ulong> entityIdMap)
+            Dictionary<ulong, ulong> entityIdMap,
+            UnityEngine.Vector3Int blueprintAnchorPosition)
         {
             var alotId = customData.GetCustomData<ulong>("alotId");
             if (alotId > 0)
@@ -590,7 +621,8 @@ namespace Duplicationer
             ref ulong additionalData_ulong_02,
             ref byte[] dcsData,
             ref BlueprintData blueprintData,
-            Dictionary<ulong, ulong> entityIdMap)
+            Dictionary<ulong, ulong> entityIdMap,
+            UnityEngine.Vector3Int blueprintAnchorPosition)
         {
             var actionTemplateId = customData.GetCustomData<ulong>("actionTemplateId");
             if (actionTemplateId > 0)
@@ -623,7 +655,8 @@ namespace Duplicationer
             ref ulong additionalData_ulong_02,
             ref byte[] dcsData,
             ref BlueprintData blueprintData,
-            Dictionary<ulong, ulong> entityIdMap)
+            Dictionary<ulong, ulong> entityIdMap,
+            UnityEngine.Vector3Int blueprintAnchorPosition)
         {
             var painterAlotId = customData.GetCustomData<ulong>("painterAlotId");
             if (painterAlotId > 0)
@@ -670,7 +703,8 @@ namespace Duplicationer
             ref ulong additionalData_ulong_02,
             ref byte[] dcsData,
             ref BlueprintData blueprintData,
-            Dictionary<ulong, ulong> entityIdMap)
+            Dictionary<ulong, ulong> entityIdMap,
+            UnityEngine.Vector3Int blueprintAnchorPosition)
         {
             var priorityIdx_output01 = GetToggleCount(customData.GetCustomData<byte>("priorityIdx_output01"));
             var priorityIdx_output02 = GetToggleCount(customData.GetCustomData<byte>("priorityIdx_output02"));
@@ -717,7 +751,8 @@ namespace Duplicationer
             ref ulong additionalData_ulong_02,
             ref byte[] dcsData,
             ref BlueprintData blueprintData,
-            Dictionary<ulong, ulong> entityIdMap)
+            Dictionary<ulong, ulong> entityIdMap,
+            UnityEngine.Vector3Int blueprintAnchorPosition)
         {
             var priorityIdx_input01 = GetToggleCount(customData.GetCustomData<byte>("priorityIdx_input01"));
             var priorityIdx_input02 = GetToggleCount(customData.GetCustomData<byte>("priorityIdx_input02"));
@@ -762,7 +797,8 @@ namespace Duplicationer
             ref ulong additionalData_ulong_02,
             ref byte[] dcsData,
             ref BlueprintData blueprintData,
-            Dictionary<ulong, ulong> entityIdMap)
+            Dictionary<ulong, ulong> entityIdMap,
+            UnityEngine.Vector3Int blueprintAnchorPosition)
         {
             var configuredItemTemplateId = customData.GetCustomData<ulong>("configuredItemTemplateId");
             if (configuredItemTemplateId > 0)
@@ -844,7 +880,8 @@ namespace Duplicationer
             ref ulong additionalData_ulong_02,
             ref byte[] dcsData,
             ref BlueprintData blueprintData,
-            Dictionary<ulong, ulong> entityIdMap)
+            Dictionary<ulong, ulong> entityIdMap,
+            UnityEngine.Vector3Int blueprintAnchorPosition)
         {
             var robotSlotContentsString = customData.GetCustomData<string>("robotSlotContents");
             var robotSlotContentsParts = robotSlotContentsString.Split("|", StringSplitOptions.RemoveEmptyEntries);
@@ -962,7 +999,8 @@ namespace Duplicationer
             ref ulong additionalData_ulong_02,
             ref byte[] dcsData,
             ref BlueprintData blueprintData,
-            Dictionary<ulong, ulong> entityIdMap)
+            Dictionary<ulong, ulong> entityIdMap,
+            UnityEngine.Vector3Int blueprintAnchorPosition)
         {
             var powerCoreSlotContentsString = customData.GetCustomData<string>("powerCoreSlotContents");
             var powerCoreSlotContentsParts = powerCoreSlotContentsString.Split("|", StringSplitOptions.RemoveEmptyEntries);
@@ -1047,7 +1085,8 @@ namespace Duplicationer
             ref ulong additionalData_ulong_02,
             ref byte[] dcsData,
             ref BlueprintData blueprintData,
-            Dictionary<ulong, ulong> entityIdMap)
+            Dictionary<ulong, ulong> entityIdMap,
+            UnityEngine.Vector3Int blueprintAnchorPosition)
         {
             var trainStationName = customData.GetCustomData<string>("trainStation_name");
             var trainStationHasLimit = customData.HasCustomData("trainStation_trainLimit");
@@ -1081,7 +1120,8 @@ namespace Duplicationer
             ref ulong additionalData_ulong_02,
             ref byte[] dcsData,
             ref BlueprintData blueprintData,
-            Dictionary<ulong, ulong> entityIdMap)
+            Dictionary<ulong, ulong> entityIdMap,
+            UnityEngine.Vector3Int blueprintAnchorPosition)
         {
             var buildingMode = customData.GetCustomData<byte>("trainLoadingStation_buildingMode");
             postBuildActions.Add((ConstructionTaskGroup taskGroup, ConstructionTaskGroup.ConstructionTask task) =>
@@ -1113,7 +1153,8 @@ namespace Duplicationer
             ref ulong additionalData_ulong_02,
             ref byte[] dcsData,
             ref BlueprintData blueprintData,
-            Dictionary<ulong, ulong> entityIdMap)
+            Dictionary<ulong, ulong> entityIdMap,
+            UnityEngine.Vector3Int blueprintAnchorPosition)
         {
             var colorR = customData.GetCustomData<byte>("color_r");
             var colorG = customData.GetCustomData<byte>("color_g");
@@ -1123,6 +1164,88 @@ namespace Duplicationer
                 if (task.entityId > 0)
                 {
                     GameRoot.addLockstepEvent(new ColorizeObjectEvent(usernameHash, task.entityId, colorR, colorG, colorB, false, false));
+                }
+            });
+        }
+    }
+
+    public class CDA_Elevator : CustomDataApplier
+    {
+        public override bool ShouldApply(BuildableObjectTemplate bot, CustomDataWrapper customData)
+            => customData.HasCustomData("elevatorStation");
+
+        public override void Apply(
+            BuildableObjectTemplate bot,
+            CustomDataWrapper customData,
+            List<PostBuildAction> postBuildActions,
+            ulong usernameHash,
+            ref bool usePasteConfigSettings,
+            ref ulong pasteConfigSettings_01,
+            ref ulong pasteConfigSettings_02,
+            ref ulong additionalData_ulong_01,
+            ref ulong additionalData_ulong_02,
+            ref byte[] dcsData,
+            ref BlueprintData blueprintData,
+            Dictionary<ulong, ulong> entityIdMap,
+            UnityEngine.Vector3Int blueprintAnchorPosition)
+        {
+            UnityEngine.Debug.Log("Applying elevator custom data");
+            List<string> elevatorStations = new();
+            customData.GetCustomDataList("elevatorStation", elevatorStations);
+            postBuildActions.Add((ConstructionTaskGroup taskGroup, ConstructionTaskGroup.ConstructionTask task) =>
+            {
+                if (task.entityId > 0)
+                {
+                    var stationGO = StreamingSystem.getBuildableObjectGOByEntityId(task.entityId) as ElevatorStationGO;
+                    if (stationGO == null)
+                    {
+                        UnityEngine.Debug.LogWarning($"Failed to apply elevator custom data: GameObject for entity {task.entityId} is not an ElevatorStationGO");
+                        return;
+                    }
+
+                    if (stationGO.parentCabin == null)
+                    {
+                        UnityEngine.Debug.LogWarning($"Failed to apply elevator custom data: ElevatorStationGO with entity {task.entityId} is not properly linked to a cabin");
+                        return;
+                    }    
+
+                    if (stationGO.parentCabin.queryData.segmentState != 0)
+                    {
+                        UnityEngine.Debug.LogWarning($"Failed to apply elevator custom data: ElevatorStationGO with entity {task.entityId} is linked to a cabin that is not in the correct state");
+                        return;
+                    }    
+
+                    var segmentId = stationGO.parentCabinId;
+
+                    UnityEngine.Debug.Log("Configuring elevator");
+                    var lsEvent = new ElevatorPushConstructionEvent(GameRoot.getClientUsernameHash(), segmentId);
+                    var anyStationNew = false;
+                    foreach (var station in elevatorStations)
+                    {
+                        var stationDataParts = station.Split("|");
+                        int stationHeight = int.Parse(stationDataParts[1]) + blueprintAnchorPosition.y;
+                        string stationName = stationDataParts[0];
+                        var stationPosition = stationGO.aabb.anchorToV3I();
+                        stationPosition.y = stationHeight;
+                        var stationId = Character.DemolishBuildingByAnchorPositionEvent.buildingManager_tryGetBuildableEntityByAnchorPos(new v3i(stationPosition), stationGO.template.id);
+                        if (stationId == 0)
+                            anyStationNew = true;
+
+                        var stationData = new ElevatorPushConstructionEvent.SerializeAbleStationData
+                        {
+                            entityId = stationId,
+                            stationName = stationName,
+                            stationHeight = stationHeight
+                        };
+                        lsEvent.array_stationData[lsEvent.array_stationData_count++] = stationData;
+                        UnityEngine.Debug.Log($"Added elevator station with name {stationData.stationName} and height {stationData.stationHeight}");
+                    }
+                    if (anyStationNew)
+                    {
+                        Array.Sort(lsEvent.array_stationData, 0, (int)lsEvent.array_stationData_count,
+                            Comparer<ElevatorPushConstructionEvent.SerializeAbleStationData>.Create((a, b) => a.stationHeight.CompareTo(b.stationHeight)));
+                        GameRoot.addLockstepEvent(lsEvent);
+                    }
                 }
             });
         }

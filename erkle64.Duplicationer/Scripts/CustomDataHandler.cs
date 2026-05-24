@@ -167,7 +167,7 @@ namespace Duplicationer
             ref ulong additionalData_ulong_02,
             ref byte[] dcsData,
             ref BlueprintData blueprintData,
-            Dictionary<ulong, ulong> entityIdMap);
+            Dictionary<ulong, ulong> entityIdMap, UnityEngine.Vector3Int blueprintAnchorPosition);
 
         private static CustomDataApplier[] _appliers = null;
         public static CustomDataApplier[] All
