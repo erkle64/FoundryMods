@@ -686,6 +686,7 @@ namespace PlanIt
 
             sw.Restart();
             sw.Start();
+            result.SortRecipes();
             var (conveyor, conveyorSpeed) = ItemElementRecipe.ConveyorSpeeds[Mathf.Clamp(_currentPlan.conveyorTier, 0, ItemElementRecipe.ConveyorSpeeds.Count - 1)];
             _planContent.transform.DestroyAllChildren();
             var inputAmounts = new Dictionary<ItemElementTemplate, double>();

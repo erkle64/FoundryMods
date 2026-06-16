@@ -83,6 +83,8 @@ namespace PlanIt
 
         public void SortRecipes()
         {
+            if (recipeOrder.Count <= 1) return;
+
             ulong GetRecipeForItem(ItemElementTemplate item, IEnumerable<ulong> recipeIds)
             {
                 foreach (var recipeId in recipeIds)
@@ -118,9 +120,9 @@ namespace PlanIt
                 }
             }
 
-            var sortedRecipeIdGroups = TopoSort<ulong>.CyclicTopoSort(edges);
+            var sortedRecipeIds = TopoSort<ulong>.CyclicTopoSort(edges);
             recipeOrder.Clear();
-            foreach (var group in sortedRecipeIdGroups) recipeOrder.AddRange(group);
+            recipeOrder.AddRange(sortedRecipeIds);
         }
 
         public IEnumerable<KeyValuePair<ulong, double>> EachRecipe()

@@ -85,7 +85,8 @@ namespace Planit
             return sortedResult;
         }
 
-        public static List<HashSet<T>> CyclicTopoSort(HashSet<(T, T)> edges, T? startNode = null)
+        // NEW: Returns a single ordered list, biased to keep connected nodes close.
+        public static List<T> CyclicTopoSort(HashSet<(T, T)> edges, T? startNode = null)
         {
             var nodeIns = new Dictionary<T, HashSet<T>>();
             var nodeOuts = new Dictionary<T, HashSet<T>>();
@@ -124,25 +125,181 @@ namespace Planit
                 }
             }
 
-            var graphTopologies = new List<List<HashSet<T>>>();
+            if (!cyclicEdges.Any())
+            {
+                return new List<T>();
+            }
+
+            List<T> bestOrder = null;
+            long bestScore = long.MaxValue;
+
             foreach (var cyclicEdgesSet in cyclicEdges)
             {
                 var currentAcyclicEdges = new HashSet<(T, T)>(edges);
                 currentAcyclicEdges.ExceptWith(cyclicEdgesSet);
 
-                var topology = AcyclicTopoSort(currentAcyclicEdges);
+                var order = AcyclicTopoSortLinearPreferNearby(currentAcyclicEdges);
 
-                graphTopologies.Add(topology);
+                // Primary: fewer “breaks” between consecutive connected nodes.
+                // Secondary: prefer shorter forward distances for edges.
+                long score = ScoreLinearCloseness(order, currentAcyclicEdges);
+
+                if (score < bestScore)
+                {
+                    bestScore = score;
+                    bestOrder = order;
+                }
             }
 
-            if (!graphTopologies.Any())
-            {
-                return new List<HashSet<T>>();
-            }
-
-            return graphTopologies.OrderBy(x => x.Count).First();
+            return bestOrder ?? new List<T>();
         }
 
+        private static List<T> AcyclicTopoSortLinearPreferNearby(HashSet<(T, T)> edges)
+        {
+            var nodeIns = new Dictionary<T, HashSet<T>>();
+            var nodeOuts = new Dictionary<T, HashSet<T>>();
+            var allNodes = new HashSet<T>();
+
+            // Also build undirected adjacency just for the “nearby” heuristic.
+            var adjacency = new Dictionary<T, HashSet<T>>();
+
+            foreach (var (startNode, endNode) in edges)
+            {
+                allNodes.Add(startNode);
+                allNodes.Add(endNode);
+
+                nodeIns.GetOrAddHashSet(endNode).Add(startNode);
+                nodeOuts.GetOrAddHashSet(startNode).Add(endNode);
+
+                nodeIns.GetOrAddHashSet(startNode);
+                nodeOuts.GetOrAddHashSet(endNode);
+
+                adjacency.GetOrAddHashSet(startNode).Add(endNode);
+                adjacency.GetOrAddHashSet(endNode).Add(startNode);
+            }
+
+            var inDegree = allNodes.ToDictionary(node => node, node => nodeIns.GetOrAddHashSet(node).Count);
+
+            // Available nodes with inDegree==0
+            var available = new HashSet<T>(allNodes.Where(n => inDegree[n] == 0));
+            var result = new List<T>(allNodes.Count);
+
+            // Track a small window of recent nodes to keep chains tight.
+            var recent = new Queue<T>(8);
+
+            while (available.Count > 0)
+            {
+                // Pick the next node: prefer one adjacent to something recently emitted;
+                // within that, prefer one that unlocks many nodes (out-degree).
+                T next = ChooseNext(available, recent, adjacency, nodeOuts);
+
+                available.Remove(next);
+                result.Add(next);
+
+                recent.Enqueue(next);
+                while (recent.Count > 8)
+                    recent.Dequeue();
+
+                if (nodeOuts.TryGetValue(next, out var neighbors))
+                {
+                    foreach (var neighbor in neighbors)
+                    {
+                        inDegree[neighbor]--;
+                        if (inDegree[neighbor] == 0)
+                        {
+                            available.Add(neighbor);
+                        }
+                    }
+                }
+            }
+
+            if (result.Count != allNodes.Count)
+            {
+                PlanItSystem.log.LogWarning("Warning: Cycle detected in supposedly acyclic graph input to AcyclicTopoSortLinearPreferNearby.");
+            }
+
+            return result;
+        }
+
+        private static T ChooseNext(
+            HashSet<T> available,
+            Queue<T> recent,
+            Dictionary<T, HashSet<T>> adjacency,
+            Dictionary<T, HashSet<T>> nodeOuts)
+        {
+            // 1) If something is adjacent to the most recent nodes, pick from that set.
+            foreach (var r in recent.Reverse())
+            {
+                if (!adjacency.TryGetValue(r, out var neigh))
+                    continue;
+
+                // Among adjacent candidates, prefer higher out-degree (unlocks more).
+                bool foundAny = false;
+                T best = default;
+                int bestOut = -1;
+
+                foreach (var c in available)
+                {
+                    if (!neigh.Contains(c))
+                        continue;
+
+                    foundAny = true;
+                    int outDeg = nodeOuts.TryGetValue(c, out var outs) ? outs.Count : 0;
+                    if (outDeg > bestOut)
+                    {
+                        bestOut = outDeg;
+                        best = c;
+                    }
+                }
+
+                if (foundAny)
+                    return best;
+            }
+
+            // 2) Otherwise pick a node that unlocks many nodes.
+            return available
+                .OrderByDescending(c => nodeOuts.TryGetValue(c, out var outs) ? outs.Count : 0)
+                .First();
+        }
+
+        private static long ScoreLinearCloseness(List<T> order, HashSet<(T, T)> edges)
+        {
+            var indexOf = new Dictionary<T, int>(order.Count);
+            for (int i = 0; i < order.Count; i++)
+            {
+                indexOf[order[i]] = i;
+            }
+
+            // Undirected edges for “consecutive connectivity”
+            var undirected = new HashSet<(T, T)>();
+            foreach (var (a, b) in edges)
+            {
+                undirected.Add((a, b));
+                undirected.Add((b, a));
+            }
+
+            long score = 0;
+
+            // Penalize when consecutive nodes are not connected.
+            for (int i = 0; i + 1 < order.Count; i++)
+            {
+                if (!undirected.Contains((order[i], order[i + 1])))
+                    score += 10;
+            }
+
+            // Penalize long forward spans (keeps directly connected nodes close in the order).
+            foreach (var (from, to) in edges)
+            {
+                if (!indexOf.TryGetValue(from, out int a) || !indexOf.TryGetValue(to, out int b))
+                    continue;
+
+                int span = b - a;
+                if (span > 1)
+                    score += (long)span * (long)span;
+            }
+
+            return score;
+        }
 
         private static List<HashSet<(T, T)>> CyclicTopoSortRecursive(Dictionary<T, HashSet<T>> nodeIns, Dictionary<T, HashSet<T>> nodeOuts)
         {
